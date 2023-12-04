@@ -16,7 +16,7 @@ We propose using an upgraded version of `EIP-3009`, with accomodates for the cus
 There are two key functions in the `EIP-3009` contract, which handle the transfer execution:
 
 - `transferWithAuthorization` allows anyone to submit the transaction data and the `v`, `r`, `s` fields, which will be verified, and if correct, the transfer will be executed.
-- `receiveWithAtuhorization` allows `receiver` perform `transferWithAuthorization`, with one additional check of the `msg.sender` (`msg.sender == receiver`)
+- `receiveWithAuthorization` allows `receiver` perform `transferWithAuthorization`, with one additional check of the `msg.sender` (`msg.sender == receiver`)
 
 ### Transfer authorization
 
@@ -32,7 +32,7 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
   - Check if the `msg.sender` is authorized to reject the transfer (`msg.sender == receiver`)
   - If true, delete the transfer from `pending` state
 
-`receiveWithAtuhorization` will remain the same, because only the `receiver` can trigger it and since they manually did that, it is assumed that they've accepted the transfer and `pending` state will be skipped.
+`receiveWithAuthorization` will remain the same, because only the `receiver` can trigger it and since they manually did that, it is assumed that they've accepted the transfer and `pending` state will be skipped.
 
 TODO: detailed specification of how the funds will be manipulated (e.g. if funds will be locked until the `deadline`, how will the funds be unlocked etc)
 
