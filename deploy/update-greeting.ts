@@ -1,11 +1,9 @@
 import * as hre from "hardhat";
-import { getWallet } from "./utils";
+import { getWallet, readEnv } from "./utils";
 import { ethers } from "ethers";
 
 // Address of the contract to interact with
-const CONTRACT_ADDRESS = "";
-if (!CONTRACT_ADDRESS)
-  throw "⛔️ Provide address of the contract to interact with!";
+const CONTRACT_ADDRESS = readEnv("GREETER_CONTRACT");
 
 // An example of a script to interact with the contract
 export default async function () {
