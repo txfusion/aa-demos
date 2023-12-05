@@ -25,10 +25,10 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
 - `transferWithAuthorization`:
   - Perform all the necessary checks of transaction data and the signature fields
   - If everything's alright, place the transfer in the `pending` state (either in a `mapping` or some equivalent data structure in the smart contract)
-- `acceptTransfer`:
+- `acceptTransferWithAuthorization`:
   - Check if the `msg.sender` is authorized to accept the transfer (`msg.sender == receiver`)
   - If true, execute the transfer
-- `rejectTransfer`:
+- `rejectTransferWithAuthorization`:
   - Check if the `msg.sender` is authorized to reject the transfer (`msg.sender == receiver`)
   - If true, delete the transfer from `pending` state
 
