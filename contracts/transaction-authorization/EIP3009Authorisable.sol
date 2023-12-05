@@ -82,6 +82,8 @@ contract EIP3009Authorisable is EIP3009, EIP2612, IEIP3009Authorisable {
     // _authorizationStates[from][to][nonce] = true;
     // emit AuthorizationUsed(from, to, nonce);
 
+    _transfer(from, address(this), value);
+
     pendingTransfers[from][to][nonce] = PendingTransfer({
       value: value,
       validBefore: validBefore,
@@ -106,6 +108,7 @@ contract EIP3009Authorisable is EIP3009, EIP2612, IEIP3009Authorisable {
     _transferWithAuthorization(
       ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
       from,
+      address(this),
       to,
       pt.value,
       pt.validAfter,
@@ -140,6 +143,8 @@ contract EIP3009Authorisable is EIP3009, EIP2612, IEIP3009Authorisable {
     );
     _checkSender(data, from, v, r, s);
 
+    _transfer(address(this), from, pt.value);
+
     delete pendingTransfers[from][to][nonce];
     delete _authorizationStates[from][to][nonce];
 
@@ -165,6 +170,7 @@ contract EIP3009Authorisable is EIP3009, EIP2612, IEIP3009Authorisable {
     _transferWithAuthorization(
       RECEIVE_WITH_AUTHORIZATION_TYPEHASH,
       from,
+      from,
       to,
       value,
       validAfter,
@@ -174,9 +180,13 @@ contract EIP3009Authorisable is EIP3009, EIP2612, IEIP3009Authorisable {
       r,
       s
     );
+
+    delete pendingTransfers[from][to][nonce];
   }
 
   /**
+   * TODO: Figure out the usecase of this
+   *
    * @notice Attempt to cancel an authorization
    * @param sender        Sender's address
    * @param receiver      Receiver's address

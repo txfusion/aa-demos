@@ -1,9 +1,12 @@
 import { HardhatUserConfig } from "hardhat/config";
 
-import "@matterlabs/hardhat-zksync-node";
-import "@matterlabs/hardhat-zksync-deploy";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
 import "@matterlabs/hardhat-zksync-solc";
+import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-verify";
+import "@matterlabs/hardhat-zksync-upgradable";
+import "@matterlabs/hardhat-zksync-chai-matchers";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "dockerizedNode",

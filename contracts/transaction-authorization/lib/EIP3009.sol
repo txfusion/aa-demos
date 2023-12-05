@@ -17,23 +17,11 @@ abstract contract EIP3009 is IERC20Internal, EIP712Domain {
     string memory tokenVersion,
     string memory tokenSymbol,
     uint8 tokenDecimals
-  )
-    IERC20Internal(
-      tokenTotalSupply,
-      tokenName,
-      tokenVersion,
-      tokenSymbol,
-      tokenDecimals
-    )
-  {
+  ) IERC20Internal(0, tokenName, tokenVersion, tokenSymbol, tokenDecimals) {
     DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(tokenName, tokenVersion);
 
     _mint(msg.sender, tokenTotalSupply);
   }
-
-  // keccak256("TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-  bytes32 public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
-    0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267;
 
   // keccak256("ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
   bytes32 public constant RECEIVE_WITH_AUTHORIZATION_TYPEHASH =
@@ -111,6 +99,7 @@ abstract contract EIP3009 is IERC20Internal, EIP712Domain {
    * @notice Execute a transfer with a signed authorization
    * @param typeHash            Hash of the initiated operation
    * @param from                Payer's address (Authorizer)
+   * @param currentTokenOwner   Current owner of the tokens that are to be sent (either this contract or payer)
    * @param to                  Payee's address
    * @param value               Token amount to be transferred
    * @param validAfter          The time after which this is valid (unix time)
@@ -123,6 +112,7 @@ abstract contract EIP3009 is IERC20Internal, EIP712Domain {
   function _transferWithAuthorization(
     bytes32 typeHash,
     address from,
+    address currentTokenOwner,
     address to,
     uint256 value,
     uint256 validAfter,
@@ -146,7 +136,7 @@ abstract contract EIP3009 is IERC20Internal, EIP712Domain {
     _authorizationStates[from][to][nonce] = true;
     emit AuthorizationUsed(from, to, nonce);
 
-    _transfer(from, to, value);
+    _transfer(currentTokenOwner, to, value);
   }
 
   /**
