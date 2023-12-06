@@ -96,8 +96,6 @@ abstract contract EIP3009Authorisable is
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
     PendingTransfer memory pt = pendingTransfers[from][to][nonce];
-    require(block.timestamp > pt.validAfter, _AUTHORIZATION_NOT_YET_VALID);
-    require(block.timestamp < pt.validBefore, _AUTHORIZATION_EXPIRED);
 
     bytes memory data = abi.encode(
       ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
@@ -108,7 +106,7 @@ abstract contract EIP3009Authorisable is
       pt.validBefore,
       nonce
     );
-    _checkSender(data, from, v, r, s);
+    _checkSender(data, to, v, r, s);
     // ~~~~~~~~~~~~~~~
 
     // Unlock tokens
@@ -133,20 +131,17 @@ abstract contract EIP3009Authorisable is
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
-    PendingTransfer memory pt = pendingTransfers[from][to][nonce];
-    require(block.timestamp > pt.validAfter, _AUTHORIZATION_NOT_YET_VALID);
-    require(block.timestamp < pt.validBefore, _AUTHORIZATION_EXPIRED);
-
     bytes memory data = abi.encode(
       REJECT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
       from,
       to,
       nonce
     );
-    _checkSender(data, from, v, r, s);
+    _checkSender(data, to, v, r, s);
     // ~~~~~~~~~~~~~~~
 
     // Unlock tokens
+    PendingTransfer memory pt = pendingTransfers[from][to][nonce];
     _transfer(address(this), from, pt.value);
 
     // Remove pending transfer
@@ -184,7 +179,7 @@ abstract contract EIP3009Authorisable is
       validBefore,
       nonce
     );
-    _checkSender(data, from, v, r, s);
+    _checkSender(data, to, v, r, s);
     // ~~~~~~~~~~~~~~~
 
     // Transfer tokens from sender to receiver

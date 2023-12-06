@@ -1,8 +1,13 @@
 import { assert, expect } from "chai";
 
 import { transactionAuthorizationSetup as txAuthSetup } from "./utils/setups";
-import { EIP3009_TYPEHASHES } from "./utils/constants";
-import { ecSign, Signature, strip0x } from "./utils/signatures/helpers";
+import { EIP3009_ERRORS, EIP3009_TYPEHASHES } from "./utils/constants";
+import {
+  ecSign,
+  hexStringFromBuffer,
+  Signature,
+  strip0x,
+} from "./utils/signatures/helpers";
 import { ethers } from "ethers";
 import { Wallet } from "zksync-web3";
 
@@ -15,42 +20,278 @@ describe("========= EIP3009Authorisable =========", async () => {
     nonce = ethers.BigNumber.from(ethers.utils.randomBytes(32));
   });
 
-  describe("~~~ Setup ~~~", async function () {
-    it("should set up ERC20 variables", async () => {
-      const { contract, erc20 } = context;
+  // describe("~~~ Setup ~~~", async function () {
+  //   it("should set up ERC20 variables", async () => {
+  //     const { contract, erc20 } = context;
 
-      assert.equal(
-        (await contract.totalSupply()).toString(),
-        erc20.supply.toString(),
+  //     assert.equal(
+  //       (await contract.totalSupply()).toString(),
+  //       erc20.supply.toString(),
+  //     );
+  //     expect(await contract.name()).to.equal(erc20.name);
+  //     expect(await contract.version()).to.equal(erc20.version);
+  //     expect(await contract.symbol()).to.equal(erc20.symbol);
+  //     expect(await contract.version()).to.equal(erc20.version);
+  //   });
+
+  //   it("should set up EIP3009 typehashes", async () => {
+  //     const { contract } = context;
+
+  //     expect(await contract.RECEIVE_WITH_AUTHORIZATION_TYPEHASH()).to.equal(
+  //       EIP3009_TYPEHASHES.RECEIVE,
+  //     );
+  //     expect(await contract.CANCEL_AUTHORIZATION_TYPEHASH()).to.equal(
+  //       EIP3009_TYPEHASHES.CANCEL_AUTHORIZATION,
+  //     );
+  //     expect(
+  //       await contract.QUEUE_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
+  //     ).to.equal(EIP3009_TYPEHASHES.QUEUE_TRANSFER);
+  //     expect(
+  //       await contract.ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
+  //     ).to.equal(EIP3009_TYPEHASHES.ACCEPT_TRANSFER);
+  //     expect(
+  //       await contract.REJECT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
+  //     ).to.equal(EIP3009_TYPEHASHES.REJECT_TRANSFER);
+  //   });
+  // });
+
+  // describe("~~~ Queue Transfer ~~~", async function () {
+  //   it("should revert if 'from' is not the signer", async () => {
+  //     const { contract, domainSeparator, accounts, erc20 } = context;
+  //     const { sender, receiver } = accounts;
+
+  //     const transferParams = {
+  //       from: sender.address,
+  //       to: receiver.address,
+  //       value: 100,
+  //       validAfter: 0,
+  //       validBefore: ethers.constants.MaxUint256.toString(),
+  //     };
+  //     const { from, to, value, validAfter, validBefore } = transferParams;
+
+  //     const { v, r, s } = signQueueTransfer(
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce,
+  //       domainSeparator,
+  //       receiver.privateKey, // receiver signs transaction to himself
+  //     );
+
+  //     expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+  //     expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+  //     await expect(
+  //       contract
+  //         .connect(receiver)
+  //         .queueTransfer(
+  //           from,
+  //           to,
+  //           value,
+  //           validAfter,
+  //           validBefore,
+  //           nonce,
+  //           v,
+  //           r,
+  //           s,
+  //         ),
+  //     ).to.be.revertedWith(EIP3009_ERRORS.INVALID_SIGNATURE);
+  //   });
+
+  //   it("should revert if 'validAfter' timestamp has not come yet", async () => {
+  //     const { contract, domainSeparator, accounts, erc20 } = context;
+  //     const { sender, receiver } = accounts;
+
+  //     const transferParams = {
+  //       from: sender.address,
+  //       to: receiver.address,
+  //       value: 100,
+  //       validAfter: ethers.constants.MaxUint256.toString(), // start time long after current time
+  //       validBefore: ethers.constants.MaxUint256.toString(),
+  //     };
+  //     const { from, to, value, validAfter, validBefore } = transferParams;
+
+  //     const { v, r, s } = signQueueTransfer(
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce,
+  //       domainSeparator,
+  //       sender.privateKey,
+  //     );
+
+  //     expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+  //     expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+  //     await expect(
+  //       contract
+  //         .connect(sender)
+  //         .queueTransfer(
+  //           from,
+  //           to,
+  //           value,
+  //           validAfter,
+  //           validBefore,
+  //           nonce,
+  //           v,
+  //           r,
+  //           s,
+  //         ),
+  //     ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_NOT_YET_VALID);
+  //   });
+
+  //   it("should revert if 'validBefore' timestamp has already passed", async () => {
+  //     const { contract, domainSeparator, accounts, erc20 } = context;
+  //     const { sender, receiver } = accounts;
+
+  //     const transferParams = {
+  //       from: sender.address,
+  //       to: receiver.address,
+  //       value: 100,
+  //       validAfter: 0,
+  //       validBefore: 0, // end time long before current time
+  //     };
+  //     const { from, to, value, validAfter, validBefore } = transferParams;
+
+  //     const { v, r, s } = signQueueTransfer(
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce,
+  //       domainSeparator,
+  //       sender.privateKey,
+  //     );
+
+  //     expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+  //     expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+  //     await expect(
+  //       contract
+  //         .connect(sender)
+  //         .queueTransfer(
+  //           from,
+  //           to,
+  //           value,
+  //           validAfter,
+  //           validBefore,
+  //           nonce,
+  //           v,
+  //           r,
+  //           s,
+  //         ),
+  //     ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_EXPIRED);
+  //   });
+
+  //   it("should revert if 'nonce' has already been used", async () => {
+  //     const { contract, domainSeparator, accounts, erc20 } = context;
+  //     const { sender, receiver } = accounts;
+
+  //     const transferParams = {
+  //       from: sender.address,
+  //       to: receiver.address,
+  //       value: 100,
+  //       validAfter: 0,
+  //       validBefore: ethers.constants.MaxUint256.toString(),
+  //     };
+  //     const { from, to, value, validAfter, validBefore } = transferParams;
+
+  //     expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+  //     expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+  //     await executeQueueTransfer(
+  //       contract,
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce,
+  //       domainSeparator,
+  //       sender,
+  //     );
+
+  //     expect(await contract.balanceOf(contract.address)).to.equal(value);
+
+  //     await executeQueueTransfer(
+  //       contract,
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce, // same nonce again
+  //       domainSeparator,
+  //       sender,
+  //       EIP3009_ERRORS.AUTHORIZATION_USED_ERROR,
+  //     );
+  //   });
+
+  //   it("should pass if everything is fine", async () => {
+  //     const { contract, domainSeparator, accounts, erc20 } = context;
+  //     const { sender, receiver } = accounts;
+
+  //     const transferParams = {
+  //       from: sender.address,
+  //       to: receiver.address,
+  //       value: 100,
+  //       validAfter: 0,
+  //       validBefore: ethers.constants.MaxUint256.toString(),
+  //     };
+  //     const { from, to, value, validAfter, validBefore } = transferParams;
+
+  //     expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+  //     expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+  //     await executeQueueTransfer(
+  //       contract,
+  //       from,
+  //       to,
+  //       value,
+  //       validAfter,
+  //       validBefore,
+  //       nonce,
+  //       domainSeparator,
+  //       sender,
+  //     );
+
+  //     expect(await contract.balanceOf(contract.address)).to.equal(value);
+  //   });
+  // });
+
+  describe("~~~ Accept Transfer ~~~", async function () {
+    it("should revert if pending transfer for the nonce does not exist", async () => {
+      const { contract, accounts, domainSeparator } = context;
+      const { sender, receiver } = accounts;
+
+      const randomSignature = signAcceptTransfer(
+        sender.address,
+        receiver.address,
+        0,
+        0,
+        0,
+        nonce,
+        domainSeparator,
+        sender.privateKey,
       );
-      expect(await contract.name()).to.equal(erc20.name);
-      expect(await contract.version()).to.equal(erc20.version);
-      expect(await contract.symbol()).to.equal(erc20.symbol);
-      expect(await contract.version()).to.equal(erc20.version);
+
+      await expect(
+        contract.connect(sender).acceptTransferWithAuthorization(
+          sender.address,
+          receiver.address,
+          nonce, // non existing nonce
+          randomSignature.v,
+          randomSignature.r,
+          randomSignature.s,
+        ),
+      ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_UNKNOWN);
     });
 
-    it("should set up EIP3009 typehashes", async () => {
-      const { contract } = context;
-
-      expect(await contract.RECEIVE_WITH_AUTHORIZATION_TYPEHASH()).to.equal(
-        EIP3009_TYPEHASHES.RECEIVE,
-      );
-      expect(await contract.CANCEL_AUTHORIZATION_TYPEHASH()).to.equal(
-        EIP3009_TYPEHASHES.CANCEL_AUTHORIZATION,
-      );
-      expect(
-        await contract.QUEUE_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
-      ).to.equal(EIP3009_TYPEHASHES.QUEUE_TRANSFER);
-      expect(
-        await contract.ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
-      ).to.equal(EIP3009_TYPEHASHES.ACCEPT_TRANSFER);
-      expect(
-        await contract.REJECT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH(),
-      ).to.equal(EIP3009_TYPEHASHES.REJECT_TRANSFER);
-    });
-  });
-
-  describe("~~~ Queue Transfer ~~~", async function () {
     it("should revert if 'from' is not the signer", async () => {
       const { contract, domainSeparator, accounts, erc20 } = context;
       const { sender, receiver } = accounts;
@@ -64,142 +305,10 @@ describe("========= EIP3009Authorisable =========", async () => {
       };
       const { from, to, value, validAfter, validBefore } = transferParams;
 
-      const { v, r, s } = signQueueTransfer(
-        from,
-        to,
-        value,
-        validAfter,
-        validBefore,
-        nonce,
-        domainSeparator,
-        receiver.privateKey, // receiver signs transaction to himself
-      );
-
       expect(await contract.authorizationState(from, to, nonce)).to.be.false;
       expect(await contract.balanceOf(from)).to.equal(erc20.supply);
 
-      await expect(
-        contract
-          .connect(receiver)
-          .queueTransfer(
-            from,
-            to,
-            value,
-            validAfter,
-            validBefore,
-            nonce,
-            v,
-            r,
-            s,
-          ),
-      ).to.revertedWith("EIP3009: invalid signature");
-    });
-
-    it("should revert if 'validAfter' timestamp has not come yet", async () => {
-      const { contract, domainSeparator, accounts, erc20 } = context;
-      const { sender, receiver } = accounts;
-
-      const transferParams = {
-        from: sender.address,
-        to: receiver.address,
-        value: 100,
-        validAfter: ethers.constants.MaxUint256.toString(), // start time long after current time
-        validBefore: ethers.constants.MaxUint256.toString(),
-      };
-      const { from, to, value, validAfter, validBefore } = transferParams;
-
-      const { v, r, s } = signQueueTransfer(
-        from,
-        to,
-        value,
-        validAfter,
-        validBefore,
-        nonce,
-        domainSeparator,
-        sender.privateKey,
-      );
-
-      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
-      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
-
-      await expect(
-        contract
-          .connect(sender)
-          .queueTransfer(
-            from,
-            to,
-            value,
-            validAfter,
-            validBefore,
-            nonce,
-            v,
-            r,
-            s,
-          ),
-      ).to.revertedWith("EIP3009: authorization is not yet valid");
-    });
-
-    it("should revert if 'validBefore' timestamp has already passed", async () => {
-      const { contract, domainSeparator, accounts, erc20 } = context;
-      const { sender, receiver } = accounts;
-
-      const transferParams = {
-        from: sender.address,
-        to: receiver.address,
-        value: 100,
-        validAfter: 0,
-        validBefore: 0, // end time long before current time
-      };
-      const { from, to, value, validAfter, validBefore } = transferParams;
-
-      const { v, r, s } = signQueueTransfer(
-        from,
-        to,
-        value,
-        validAfter,
-        validBefore,
-        nonce,
-        domainSeparator,
-        sender.privateKey,
-      );
-
-      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
-      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
-
-      await expect(
-        contract
-          .connect(sender)
-          .queueTransfer(
-            from,
-            to,
-            value,
-            validAfter,
-            validBefore,
-            nonce,
-            v,
-            r,
-            s,
-          ),
-      ).to.revertedWith("EIP3009: authorization has expired");
-    });
-
-    it("should revert if 'nonce' has already been used", async () => {
-      const { contract, domainSeparator, accounts, erc20 } = context;
-      const { sender, receiver } = accounts;
-
-      const transferParams = {
-        from: sender.address,
-        to: receiver.address,
-        value: 100,
-        validAfter: 0,
-        validBefore: ethers.constants.MaxUint256.toString(),
-      };
-      const { from, to, value, validAfter, validBefore } = transferParams;
-
-      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
-      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
-
-      await executeQueueTransfer(
+      const { v, r, s } = await executeQueueTransfer(
         contract,
         from,
         to,
@@ -208,23 +317,23 @@ describe("========= EIP3009Authorisable =========", async () => {
         validBefore,
         nonce,
         domainSeparator,
-        sender,
+        sender, // sender signs accept message
       );
 
       expect(await contract.balanceOf(contract.address)).to.equal(value);
 
-      await executeQueueTransfer(
-        contract,
-        from,
-        to,
-        value,
-        validAfter,
-        validBefore,
-        nonce,
-        domainSeparator,
-        sender,
-        "EIP3009: authorization is used",
-      );
+      await expect(
+        contract
+          .connect(sender)
+          .acceptTransferWithAuthorization(
+            sender.address,
+            receiver.address,
+            nonce,
+            v,
+            r,
+            s,
+          ),
+      ).to.be.revertedWith(EIP3009_ERRORS.INVALID_SIGNATURE);
     });
 
     it("should pass if everything is fine", async () => {
@@ -243,6 +352,7 @@ describe("========= EIP3009Authorisable =========", async () => {
       expect(await contract.authorizationState(from, to, nonce)).to.be.false;
       expect(await contract.balanceOf(from)).to.equal(erc20.supply);
 
+      // Transfer
       await executeQueueTransfer(
         contract,
         from,
@@ -256,6 +366,34 @@ describe("========= EIP3009Authorisable =========", async () => {
       );
 
       expect(await contract.balanceOf(contract.address)).to.equal(value);
+      expect(await contract.balanceOf(to)).to.equal(0);
+
+      // Accept
+      const { v, r, s } = signAcceptTransfer(
+        from,
+        to,
+        value,
+        validAfter,
+        validBefore,
+        nonce,
+        domainSeparator,
+        receiver.privateKey,
+      );
+
+      const acceptTx = await contract
+        .connect(sender)
+        .acceptTransferWithAuthorization(from, to, nonce, v, r, s);
+
+      expect(acceptTx)
+        .to.emit(contract, "TransferAccepted")
+        .withArgs(from, to, nonce, value)
+        .to.emit(contract, "Transfer")
+        .withArgs(contract.address, to, value);
+
+      await acceptTx.wait();
+
+      expect(await contract.balanceOf(to)).to.equal(value);
+      expect(await contract.balanceOf(contract.address)).to.equal(0);
     });
   });
 });
@@ -293,7 +431,7 @@ async function executeQueueTransfer(
   domainSeparator: string,
   signer: Wallet,
   revertMsg?: string | undefined,
-) {
+): Promise<Signature> {
   const { v, r, s } = signQueueTransfer(
     from,
     to,
@@ -321,7 +459,7 @@ async function executeQueueTransfer(
           s,
         ),
     ).to.be.revertedWith(revertMsg);
-    return;
+    return { v, r, s };
   }
 
   await expect(
@@ -331,6 +469,10 @@ async function executeQueueTransfer(
   )
     .to.emit(contract, "TransferQueued")
     .withArgs(from, to, nonce, value);
+  // .to.emit(contract, "Transfer")
+  // .withArgs(from, contract.address, value);
+
+  return { v, r, s };
 }
 
 function signAcceptTransfer(

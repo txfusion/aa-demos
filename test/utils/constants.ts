@@ -30,3 +30,11 @@ export const EIP3009_TYPEHASHES = {
     ),
   ),
 };
+
+export const EIP3009_ERRORS = {
+  INVALID_SIGNATURE: "EIP3009: invalid signature",
+  AUTHORIZATION_NOT_YET_VALID: "EIP3009: authorization is not yet valid",
+  AUTHORIZATION_EXPIRED: "EIP3009: authorization has expired",
+  AUTHORIZATION_USED_ERROR: "EIP3009: authorization is used",
+  AUTHORIZATION_UNKNOWN: "EIP3009: authorization does not exist",
+};
