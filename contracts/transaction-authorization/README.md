@@ -31,8 +31,10 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
 - `rejectTransferWithAuthorization`:
   - Check if the `msg.sender` is authorized to reject the transfer (`msg.sender == receiver`)
   - If true, delete the transfer from `pending` state
+- `cancelAuthorization`:
+  - Unlock tokens and send them back to the `sender`
 
-`receiveWithAuthorization` will remain the same, because only the `receiver` can trigger it and since they manually did that, it is assumed that they've accepted the transfer and `pending` state will be skipped.
+`receiveWithAuthorization` will remain the same, although renamed to `redeemWithAuthorization` for more clarity, because only the `receiver` can trigger it and since they manually did that, it is assumed that they've accepted the transfer and `pending` state will be skipped.
 
 ### FAQ
 
@@ -56,7 +58,7 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
 - Unlocking --> can be done through 3 methods:
   - `acceptTransferWithAuthorization` --> funds unlocked from the contract and sent to the receiver
   - `rejectTransferWithAuthorization` --> funds unlocked from the contract and sent to the sender
-  - `cancelAuthorization` (name WIP) --> funds unlocked from the contract by the sender and sent to the sender
+  - `cancelAuthorization` --> funds unlocked from the contract by the sender and sent to the sender
 
 ![diagram.png](./authorized-txs-diagram.png)
 
