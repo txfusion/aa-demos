@@ -60,11 +60,11 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
   - `rejectTransferWithAuthorization` --> funds unlocked from the contract and sent to the sender
   - `cancelAuthorization` --> funds unlocked from the contract by the sender and sent to the sender
 
-![diagram.png](./authorized-txs-diagram.png)
+![diagram.png](./diagrams/authorized-txs-diagram.png)
 
 ## Flow Diagram
 
-![flow-diagram.png](./flow-diagram.png)
+![flow-diagram.png](./diagrams/flow-diagram.png)
 
 ## Notes
 
