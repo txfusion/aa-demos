@@ -164,11 +164,20 @@ abstract contract EIP3009Authorisable is
     bytes32 s
   ) external override {
     // ~~~ Checks
-    require(to == msg.sender, "EIP3009Authorisable: caller must be the payee");
+    require(to == msg.sender, _CALLER_NOT_PAYEE);
 
     require(block.timestamp > validAfter, _AUTHORIZATION_NOT_YET_VALID);
     require(block.timestamp < validBefore, _AUTHORIZATION_EXPIRED);
-    require(!_authorizationStates[from][to][nonce], _AUTHORIZATION_USED_ERROR);
+
+    PendingTransfer memory pt = pendingTransfers[from][to][nonce]; // Note: perhaps sender queued the transfer
+
+    // If nonce is not free, it has already been used in the past
+    if (pt.value == 0) {
+      require(
+        !_authorizationStates[from][to][nonce],
+        _AUTHORIZATION_USED_ERROR
+      );
+    }
 
     bytes memory data = abi.encode(
       RECEIVE_WITH_AUTHORIZATION_TYPEHASH,
@@ -179,16 +188,16 @@ abstract contract EIP3009Authorisable is
       validBefore,
       nonce
     );
-    _checkSender(data, to, v, r, s);
+    _checkSender(data, from, v, r, s); // Note: receiver should reuse sender's signature
     // ~~~~~~~~~~~~~~~
 
     // Transfer tokens from sender to receiver
-    PendingTransfer memory pt = pendingTransfers[from][to][nonce]; // Note: perhaps sender queued the transfer
     if (pt.value == value) {
       _transfer(address(this), to, pt.value);
       delete pendingTransfers[from][to][nonce];
     } else {
       _transfer(from, to, value);
+      _authorizationStates[from][to][nonce] = true;
     }
 
     emit TransferRedeemed(from, to, nonce, value);

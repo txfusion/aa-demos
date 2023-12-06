@@ -3,6 +3,8 @@
 pragma solidity 0.8.17;
 
 abstract contract IEIP3009Authorisable {
+  string internal constant _CALLER_NOT_PAYEE =
+    "EIP3009: caller must be the payee";
   string internal constant _INVALID_SIGNATURE_ERROR =
     "EIP3009: invalid signature";
   string internal constant _AUTHORIZATION_NOT_YET_VALID =

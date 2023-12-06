@@ -32,6 +32,7 @@ export const EIP3009_TYPEHASHES = {
 };
 
 export const EIP3009_ERRORS = {
+  CALLER_NOT_PAYEE: "EIP3009: caller must be the payee",
   INVALID_SIGNATURE: "EIP3009: invalid signature",
   AUTHORIZATION_NOT_YET_VALID: "EIP3009: authorization is not yet valid",
   AUTHORIZATION_EXPIRED: "EIP3009: authorization has expired",
