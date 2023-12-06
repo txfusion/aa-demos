@@ -22,7 +22,7 @@ There are two key functions in the `EIP-3009` contract, which handle the transfe
 
 To accomodate for authorization feature, we propose customizing `EIP-3009` with the following:
 
-- `transferWithAuthorization`:
+- `queueWithAuthorization`:
   - Perform all the necessary checks of transaction data and the signature fields
   - If everything's alright, place the transfer in the `pending` state (either in a `mapping` or some equivalent data structure in the smart contract)
 - `acceptTransferWithAuthorization`:
@@ -34,9 +34,35 @@ To accomodate for authorization feature, we propose customizing `EIP-3009` with 
 
 `receiveWithAuthorization` will remain the same, because only the `receiver` can trigger it and since they manually did that, it is assumed that they've accepted the transfer and `pending` state will be skipped.
 
-TODO: detailed specification of how the funds will be manipulated (e.g. if funds will be locked until the `deadline`, how will the funds be unlocked etc)
+### FAQ
+
+1. What makes the authorisable transfer valid and executable?
+
+- Nonce has been reserved.
+- There's a pending mapping entry for that nonce.
+
+2. What's nonce used for?
+
+- Nonce is the unique identifier for the sender <-> receiver relationship.
+- If sender wants to send something to the receiver, he reserves a nonce to identify that specific transfer and that nonce can never be reused.
+- This means that once the transfer is queued, it can either be:
+  - Accepted/Rejected by the receiver
+  - Canceled by the sender
+- In either way, nonce is permanently used and from there, users can act on it.
+
+3. How does locking/unlocking work?
+
+- Locking --> can only be done through `queueWithAuthorization`, where funds from the `sender` are locked in the contract
+- Unlocking --> can be done through 3 methods:
+  - `acceptTransferWithAuthorization` --> funds unlocked from the contract and sent to the receiver
+  - `rejectTransferWithAuthorization` --> funds unlocked from the contract and sent to the sender
+  - `cancelAuthorization` (name WIP) --> funds unlocked from the contract by the sender and sent to the sender
 
 ![diagram.png](./authorized-txs-diagram.png)
+
+## Flow Diagram
+
+![flow-diagram.png](./flow-diagram.png)
 
 ## Notes
 
