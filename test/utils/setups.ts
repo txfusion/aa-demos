@@ -23,20 +23,18 @@ export async function transactionAuthorizationSetup() {
 
   const deployer = new Deployer(hre, deployerWallet);
 
-  const authEIP3009Artifact = await deployer.loadArtifact(
-    "EIP3009Authorisable",
-  );
+  const authEIP3009Artifact = await deployer.loadArtifact("TokenAuthorisable");
 
   // Note: deployer now has total supply of tokens
   const deployTx = await deployer.deploy(authEIP3009Artifact, [
-    AUTH_TOKEN_SETTINGS.supply,
     AUTH_TOKEN_SETTINGS.name,
     AUTH_TOKEN_SETTINGS.version,
     AUTH_TOKEN_SETTINGS.symbol,
     AUTH_TOKEN_SETTINGS.decimals,
+    AUTH_TOKEN_SETTINGS.supply,
   ]);
 
-  const authEIP3009 = await deployTx.deployed();
+  const authEIP3009Token = await deployTx.deployed();
 
   return {
     accounts: {
@@ -44,8 +42,8 @@ export async function transactionAuthorizationSetup() {
       receiver,
       randomWallet,
     },
-    contract: authEIP3009,
-    domainSeparator: await authEIP3009.DOMAIN_SEPARATOR(),
+    contract: authEIP3009Token,
+    domainSeparator: await authEIP3009Token.DOMAIN_SEPARATOR(),
     erc20: { ...AUTH_TOKEN_SETTINGS },
   };
 }

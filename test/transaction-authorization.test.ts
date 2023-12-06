@@ -2,13 +2,8 @@ import { assert, expect } from "chai";
 
 import { transactionAuthorizationSetup as txAuthSetup } from "./utils/setups";
 import { EIP3009_TYPEHASHES } from "./utils/constants";
-import {
-  ecSign,
-  expectRevert,
-  Signature,
-  strip0x,
-} from "./utils/signatures/helpers";
-import { ethers, utils } from "ethers";
+import { ecSign, Signature, strip0x } from "./utils/signatures/helpers";
+import { ethers } from "ethers";
 import { Wallet } from "zksync-web3";
 
 let context: Awaited<ReturnType<typeof txAuthSetup>>;
