@@ -829,6 +829,137 @@ describe("========= EIP3009Authorisable =========", async () => {
       expect(await contract.balanceOf(to)).to.equal(value);
     });
   });
+
+  describe("~~~ Cancel Authorization ~~~", async function () {
+    it("should revert if 'nonce' is unknown", async () => {
+      const { contract, domainSeparator, accounts, erc20 } = context;
+      const { sender, receiver } = accounts;
+
+      const transferParams = {
+        from: sender.address,
+        to: receiver.address,
+        value: 100,
+        validAfter: 0,
+        validBefore: ethers.constants.MaxUint256.toString(),
+      };
+      const { from, to, value, validAfter, validBefore } = transferParams;
+
+      const { v, r, s } = signCancelAuthorization(
+        from,
+        to,
+        nonce,
+        domainSeparator,
+        sender.privateKey,
+      );
+
+      await expect(
+        contract
+          .connect(receiver)
+          .cancelAuthorization(from, to, nonce, v, r, s),
+      ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_UNKNOWN);
+    });
+
+    it("should revert if 'from' is not the signer", async () => {
+      const { contract, domainSeparator, accounts, erc20 } = context;
+      const { sender, receiver } = accounts;
+
+      const transferParams = {
+        from: sender.address,
+        to: receiver.address,
+        value: 100,
+        validAfter: 0,
+        validBefore: ethers.constants.MaxUint256.toString(),
+      };
+      const { from, to, value, validAfter, validBefore } = transferParams;
+
+      await executeQueueTransfer(
+        contract,
+        from,
+        to,
+        value,
+        validAfter,
+        validBefore,
+        nonce,
+        domainSeparator,
+        sender,
+      );
+
+      const { v, r, s } = signCancelAuthorization(
+        from,
+        to,
+        nonce,
+        domainSeparator,
+        receiver.privateKey,
+      );
+
+      await expect(
+        contract
+          .connect(receiver)
+          .cancelAuthorization(from, to, nonce, v, r, s),
+      ).to.be.revertedWith(EIP3009_ERRORS.INVALID_SIGNATURE);
+    });
+
+    it("should pass if everything is fine", async () => {
+      const { contract, domainSeparator, accounts, erc20 } = context;
+      const { sender, receiver } = accounts;
+
+      const transferParams = {
+        from: sender.address,
+        to: receiver.address,
+        value: 100,
+        validAfter: 0,
+        validBefore: ethers.constants.MaxUint256.toString(),
+      };
+      const { from, to, value, validAfter, validBefore } = transferParams;
+
+      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+      expect(await contract.balanceOf(to)).to.equal(0);
+      expect(await contract.balanceOf(contract.address)).to.equal(0);
+
+      await executeQueueTransfer(
+        contract,
+        from,
+        to,
+        value,
+        validAfter,
+        validBefore,
+        nonce,
+        domainSeparator,
+        sender,
+      );
+
+      expect(await contract.balanceOf(from)).to.equal(
+        erc20.supply.sub(ethers.BigNumber.from(value)),
+      );
+      expect(await contract.balanceOf(to)).to.equal(0);
+      expect(await contract.balanceOf(contract.address)).to.equal(value);
+
+      const { v, r, s } = signCancelAuthorization(
+        from,
+        to,
+        nonce,
+        domainSeparator,
+        sender.privateKey,
+      );
+
+      const cancelTx = await contract
+        .connect(sender)
+        .cancelAuthorization(from, to, nonce, v, r, s);
+
+      expect(cancelTx)
+        .to.emit("Transfer")
+        .withArgs(contract.address, from, value)
+        .to.emit("AuthorizationCanceled")
+        .withArgs(from, to, nonce);
+
+      await cancelTx.wait();
+
+      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+      expect(await contract.balanceOf(to)).to.equal(0);
+      expect(await contract.balanceOf(contract.address)).to.equal(0);
+    });
+  });
 });
 
 function signQueueTransfer(
