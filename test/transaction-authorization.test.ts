@@ -183,6 +183,50 @@ describe("========= EIP3009Authorisable =========", async () => {
       ).to.revertedWith("EIP3009: authorization has expired");
     });
 
+    it("should revert if 'nonce' has already been used", async () => {
+      const { contract, domainSeparator, accounts, erc20 } = context;
+      const { sender, receiver } = accounts;
+
+      const transferParams = {
+        from: sender.address,
+        to: receiver.address,
+        value: 100,
+        validAfter: 0,
+        validBefore: ethers.constants.MaxUint256.toString(),
+      };
+      const { from, to, value, validAfter, validBefore } = transferParams;
+
+      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+      await executeQueueTransfer(
+        contract,
+        from,
+        to,
+        value,
+        validAfter,
+        validBefore,
+        nonce,
+        domainSeparator,
+        sender,
+      );
+
+      expect(await contract.balanceOf(contract.address)).to.equal(value);
+
+      await executeQueueTransfer(
+        contract,
+        from,
+        to,
+        value,
+        validAfter,
+        validBefore,
+        nonce,
+        domainSeparator,
+        sender,
+        "EIP3009: authorization is used",
+      );
+    });
+
     it("should pass if everything is fine", async () => {
       const { contract, domainSeparator, accounts, erc20 } = context;
       const { sender, receiver } = accounts;
@@ -248,6 +292,7 @@ async function executeQueueTransfer(
   nonce: string,
   domainSeparator: string,
   signer: Wallet,
+  revertMsg?: string | undefined,
 ) {
   const { v, r, s } = signQueueTransfer(
     from,
@@ -259,6 +304,25 @@ async function executeQueueTransfer(
     domainSeparator,
     signer.privateKey,
   );
+
+  if (revertMsg) {
+    await expect(
+      contract
+        .connect(signer)
+        .queueTransfer(
+          from,
+          to,
+          value,
+          validAfter,
+          validBefore,
+          nonce,
+          v,
+          r,
+          s,
+        ),
+    ).to.be.revertedWith(revertMsg);
+    return;
+  }
 
   await expect(
     contract
