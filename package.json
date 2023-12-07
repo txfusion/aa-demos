@@ -13,7 +13,9 @@
     "compile": "hardhat clean && hardhat compile",
     "clean": "hardhat clean",
     "test": "hardhat test --network hardhat",
-    "test:auth-tx": "cd test && hardhat test ./transaction-authorization.test.ts"
+    "test:auth-tx": "cd test && hardhat test ./transaction-authorization.test.ts",
+    "slither": "RUN_SLITHER=true slither .",
+    "slither:auth-tx": "RUN_SLITHER=true slither ./contracts/transaction-authorization/TokenAuthorisable.sol"
   },
   "devDependencies": {
     "@matterlabs/hardhat-zksync-deploy": "^0.6.5",
