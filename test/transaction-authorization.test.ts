@@ -518,7 +518,7 @@ describe("========= EIP3009Authorisable =========", async () => {
       await expect(
         contract
           .connect(sender)
-          .acceptTransferWithAuthorization(
+          .rejectTransferWithAuthorization(
             sender.address,
             receiver.address,
             nonce,
