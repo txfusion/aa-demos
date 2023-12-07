@@ -96,6 +96,7 @@ abstract contract EIP3009Authorisable is
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
     PendingTransfer memory pt = pendingTransfers[from][to][nonce];
+    require(block.timestamp < pt.validBefore, _AUTHORIZATION_EXPIRED);
 
     bytes memory data = abi.encode(
       ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH,

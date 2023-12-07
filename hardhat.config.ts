@@ -9,7 +9,7 @@ import "@matterlabs/hardhat-zksync-upgradable";
 import "@matterlabs/hardhat-zksync-chai-matchers";
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "dockerizedNode",
+  defaultNetwork: "inMemoryNode",
   networks: {
     zkSyncTestnet: {
       url: "https://testnet.era.zksync.dev",

@@ -1,4 +1,5 @@
 import { assert, expect } from "chai";
+import * as hre from "hardhat";
 
 import { transactionAuthorizationSetup as txAuthSetup } from "./utils/setups";
 import { EIP3009_ERRORS, EIP3009_TYPEHASHES } from "./utils/constants";
@@ -286,6 +287,73 @@ describe("========= EIP3009Authorisable =========", async () => {
         ),
       ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_UNKNOWN);
     });
+
+    // it("should revert if 'validBefore' has expired", async () => {
+    //   const { contract, domainSeparator, accounts, erc20 } = context;
+    //   const { sender, receiver } = accounts;
+
+    //   const blockNum = await hre.ethers.provider.getBlockNumber();
+    //   const block = await hre.ethers.provider.getBlock(blockNum);
+
+    //   const transferParams = {
+    //     from: sender.address,
+    //     to: receiver.address,
+    //     value: 100,
+    //     validAfter: 0,
+    //     validBefore: block.timestamp + 60 * 1000, // valid for 1 more minute
+    //   };
+    //   const { from, to, value, validAfter, validBefore } = transferParams;
+
+    //   expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+    //   expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+
+    //   await executeQueueTransfer(
+    //     contract,
+    //     from,
+    //     to,
+    //     value,
+    //     validAfter,
+    //     validBefore,
+    //     nonce,
+    //     domainSeparator,
+    //     sender,
+    //   );
+
+    //   expect(await contract.balanceOf(contract.address)).to.equal(value);
+
+    //   // increase block.timestamp
+    //   await hre.network.provider.send("evm_setNextBlockTimestamp", [
+    //     block.timestamp + 2 * 60 * 60 * 1000, // 2 hours later
+    //   ]);
+    //   // await hre.network.provider.send("evm_mine"); // mine new block
+
+    //   // after this, even though the timestamp is updated and
+    //   // the ```require(block.timestamp < validBefore)``` is not satisfied, acceptTransferWithAuthorization goes through
+
+    //   const { v, r, s } = signAcceptTransfer(
+    //     from,
+    //     to,
+    //     value,
+    //     validAfter,
+    //     validBefore,
+    //     nonce,
+    //     domainSeparator,
+    //     receiver.privateKey,
+    //   );
+
+    //   await expect(
+    //     contract
+    //       .connect(sender)
+    //       .acceptTransferWithAuthorization(
+    //         sender.address,
+    //         receiver.address,
+    //         nonce,
+    //         v,
+    //         r,
+    //         s,
+    //       ),
+    //   ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_EXPIRED);
+    // });
 
     it("should revert if 'to' is not the signer", async () => {
       const { contract, domainSeparator, accounts, erc20 } = context;
