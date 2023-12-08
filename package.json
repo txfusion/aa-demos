@@ -9,6 +9,7 @@
   "private": true,
   "scripts": {
     "deploy": "hardhat deploy-zksync --script deploy.ts",
+    "deploy:auth-tx": "hardhat deploy-zksync --script deploy-authtx.ts",
     "interact": "hardhat deploy-zksync --script interact.ts",
     "compile": "hardhat clean && hardhat compile",
     "clean": "hardhat clean",

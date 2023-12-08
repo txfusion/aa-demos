@@ -49,7 +49,8 @@ abstract contract EIP3009Authorisable is
     bytes32 s
   ) external override {
     // ~~~ Checks ~~~
-    require(block.timestamp > validAfter, _AUTHORIZATION_NOT_YET_VALID);
+    // Note: Do we wanna have it be submittable before so it's going to be acceptable in the future
+    // require(block.timestamp > validAfter, _AUTHORIZATION_NOT_YET_VALID);
     require(block.timestamp < validBefore, _AUTHORIZATION_EXPIRED);
     require(!_authorizationStates[from][to][nonce], _AUTHORIZATION_USED_ERROR);
 
