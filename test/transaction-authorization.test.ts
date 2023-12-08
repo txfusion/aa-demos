@@ -96,49 +96,50 @@ describe("========= EIP3009Authorisable =========", async () => {
       ).to.be.revertedWith(EIP3009_ERRORS.INVALID_SIGNATURE);
     });
 
-    it("should revert if 'validAfter' timestamp has not come yet", async () => {
-      const { contract, domainSeparator, accounts, erc20 } = context;
-      const { sender, receiver } = accounts;
+    // Note: updated in contract, might make sense to be able to queue transfers beforehand
+    // it("should revert if 'validAfter' timestamp has not come yet", async () => {
+    //   const { contract, domainSeparator, accounts, erc20 } = context;
+    //   const { sender, receiver } = accounts;
 
-      const transferParams = {
-        from: sender.address,
-        to: receiver.address,
-        value: 100,
-        validAfter: ethers.constants.MaxUint256.toString(), // start time long after current time
-        validBefore: ethers.constants.MaxUint256.toString(),
-      };
-      const { from, to, value, validAfter, validBefore } = transferParams;
+    //   const transferParams = {
+    //     from: sender.address,
+    //     to: receiver.address,
+    //     value: 100,
+    //     validAfter: ethers.constants.MaxUint256.toString(), // start time long after current time
+    //     validBefore: ethers.constants.MaxUint256.toString(),
+    //   };
+    //   const { from, to, value, validAfter, validBefore } = transferParams;
 
-      const { v, r, s } = signQueueTransfer(
-        from,
-        to,
-        value,
-        validAfter,
-        validBefore,
-        nonce,
-        domainSeparator,
-        sender.privateKey,
-      );
+    //   const { v, r, s } = signQueueTransfer(
+    //     from,
+    //     to,
+    //     value,
+    //     validAfter,
+    //     validBefore,
+    //     nonce,
+    //     domainSeparator,
+    //     sender.privateKey,
+    //   );
 
-      expect(await contract.authorizationState(from, to, nonce)).to.be.false;
-      expect(await contract.balanceOf(from)).to.equal(erc20.supply);
+    //   expect(await contract.authorizationState(from, to, nonce)).to.be.false;
+    //   expect(await contract.balanceOf(from)).to.equal(erc20.supply);
 
-      await expect(
-        contract
-          .connect(sender)
-          .queueTransfer(
-            from,
-            to,
-            value,
-            validAfter,
-            validBefore,
-            nonce,
-            v,
-            r,
-            s,
-          ),
-      ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_NOT_YET_VALID);
-    });
+    //   await expect(
+    //     contract
+    //       .connect(sender)
+    //       .queueTransfer(
+    //         from,
+    //         to,
+    //         value,
+    //         validAfter,
+    //         validBefore,
+    //         nonce,
+    //         v,
+    //         r,
+    //         s,
+    //       ),
+    //   ).to.be.revertedWith(EIP3009_ERRORS.AUTHORIZATION_NOT_YET_VALID);
+    // });
 
     it("should revert if 'validBefore' timestamp has already passed", async () => {
       const { contract, domainSeparator, accounts, erc20 } = context;
@@ -1199,3 +1200,65 @@ function signEIP712(
 
   return ecSign(digest, privateKey);
 }
+
+const eip712SignPayload = {
+  domain: {
+    name: "Authorisable EIP-3009 Token",
+    version: "1",
+    chainId: 280, // zkSync Goerli chain id
+    verifyingContract: "0x047A0dC319992618Da783Ea43B093c75f8DF440e", // TokenAuthorisable on testnet
+  } as const,
+  types: {
+    // typehash: 0x8790e5bf3b3c010fae87499a3d3ea57990c7a707fbeb33b32dbbdbecc9122fd1
+    // bytes32 + ["address", "address", "uint256", "uint256", "uint256", "bytes32"]
+    QueueTransfer: [
+      { name: "typehash", type: "bytes32" },
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "validAfter", type: "uint256" },
+      { name: "validBefore", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
+    ],
+    // typehash: 0xf691a8b7f38f3158c9f5e0bee86affb282a4efe5bcd68b44997eb178b661843f
+    // bytes32 + ["address", "address", "bytes32"]
+    AcceptTransferWithAuthorization: [
+      { name: "typehash", type: "bytes32" },
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "nonce", type: "bytes32" },
+    ],
+    // typehash: 0xd532993334ae2a721b8a5502725ae8ca63faf3200d09cd410b161542e7a8b3e0
+    // bytes32 + ["address", "address", "bytes32"]
+    RejectTransferWithAuthorization: [
+      { name: "typehash", type: "bytes32" },
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "nonce", type: "bytes32" },
+    ],
+    // NOTE: In contract it's stil called RECEIVE_WITH_AUTHORIZATION_TYPEHASH
+    // Won't have any effect on execution, since we are signing it like that, but just keep note to redeploy it later with
+    // REDEEM_WITH_AUTHORIZATION_TYPEHASH name (and appropriate keccak256 string), which is correct
+    // typehash: 0xd099cc98ef71107a616c4f0f941f04c322d8e254fe26b3c6668db87aae413de8
+    // bytes32 + ["address", "address", "uint256", "uint256", "uint256", "bytes32"]
+    RedeemWithAuthorization: [
+      { name: "typehash", type: "bytes32" },
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "validAfter", type: "uint256" },
+      { name: "validBefore", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
+    ],
+    // typehash: 0x67b7fcdd5efc94e90823a7fd29865d260c4485f2f999c20ffde06b78ec74ac6e
+    // bytes32 + ["address", "address", "bytes32"]
+    CancelAuthorization: [
+      { name: "typehash", type: "bytes32" },
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "nonce", type: "bytes32" },
+    ],
+  } as const,
+  message: "depens on the call",
+  primaryType: "depends on the call",
+};
