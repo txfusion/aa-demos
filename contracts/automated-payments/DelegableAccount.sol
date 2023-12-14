@@ -13,17 +13,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./interfaces/IDelegableAccount.sol";
+import "./interfaces/IAutoPayment.sol";
 
 import "./Allowlist.sol";
+import "./AutoPayment.sol";
 
-contract DelegableAccount is
-  IAccount,
-  IDelegableAccount,
-  IERC1271,
-  Ownable,
-  Allowlist
-{
+contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
   using TransactionHelper for Transaction;
+
+  error InvalidPayment();
 
   // bytes4(keccak256("isValidSignature(bytes32,bytes)")
   bytes4 constant EIP1271_SUCCESS_RETURN_VALUE = 0x1626ba7e;
@@ -283,19 +281,51 @@ contract DelegableAccount is
   //             Auto Payment           //
   // ---------------------------------- //
 
-  function addAllowedPayee(address _payee) public onlyOwner {
-    _addAllowedPayee(_payee);
+  /// @notice Method for allowing a payee to make auto payments
+  /// @param _payee The address of payee
+  /// @param _amount The amount of ETH the payee is able to pull from the payer
+  /// @param _timeInterval The time interval between two pull payments
+  /// @dev In case payee contract no longer supports addSubscriber() function,
+  /// the payee can be added on this contract only
+  function addAllowedPayee(
+    address _payee,
+    uint256 _amount,
+    SubscriptionPeriod _timeInterval
+  ) public onlyOwner {
+    _addAllowedPayee(_payee, _amount, _timeInterval);
+
+    bytes4 autoPaymentInterfaceId = bytes4(
+      keccak256("addSubscriber(uint256,uint8)")
+    );
+
+    if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
+      AutoPayment(_payee).addSubscriber(_amount, _timeInterval);
+    }
   }
 
+  /// @notice Method for disallowing the payee from making auto payments
+  /// @param _payee The address of the payee
+  /// @dev In case payee contract no longer supports removeSubscriber() function,
+  /// make sure that address of the payee is removed from this contract
   function removeAllowedPayee(address _payee) public onlyOwner {
     _removeAllowedPayee(_payee);
+
+    bytes4 autoPaymentInterfaceId = bytes4(keccak256("removeSubscriber()"));
+
+    if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
+      AutoPayment(_payee).removeSubscriber();
+    }
   }
 
   /// @dev Execute auto-payment transfer to allowlisted receiver
   /// @param _ethAmount Amount of ETH to send
-  function executeAutoPayment(
-    uint256 _ethAmount
-  ) external override onlyAllowlisted {
+  function executeAutoPayment(uint256 _ethAmount) external onlyAllowlisted {
+    bool isPaymentValid = isAutoPaymentAllowed(msg.sender, _ethAmount);
+
+    if (!isPaymentValid) {
+      revert InvalidPayment();
+    }
+
     (bool success, ) = payable(msg.sender).call{value: _ethAmount}("");
     require(
       success,

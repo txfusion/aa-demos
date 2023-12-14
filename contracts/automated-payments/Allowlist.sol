@@ -2,28 +2,55 @@
 
 pragma solidity ^0.8.0;
 
-contract Allowlist {
-  /// @dev payee address => allowed bool
-  mapping(address => bool) private allowedPayees;
+import {PaymentHelper} from "./PaymentHelper.sol";
+
+contract Allowlist is PaymentHelper {
+  struct PaymentCondition {
+    uint256 amount;
+    uint256 timeInterval;
+    bool isAllowed; // is payee allowed
+  }
+
+  /// @dev payee address => auto payment condition
+  mapping(address => PaymentCondition) public conditions;
+
+  /// @dev payee address => block timestamp of last payment
+  mapping(address => uint256) public lastPayment;
 
   modifier onlyAllowlisted() {
     require(
-      allowedPayees[msg.sender],
+      conditions[msg.sender].isAllowed,
       "Only allowlisted payees can trigger auto-payment"
     );
     // Continue execution if called from the allowlisted payee.
     _;
   }
 
-  function isAllowedPayee(address payee) public view returns (bool) {
-    return allowedPayees[payee];
+  function isAutoPaymentAllowed(
+    address payee,
+    uint256 amount
+  ) public view returns (bool) {
+    bool isTime = conditions[payee].timeInterval + lastPayment[payee] <
+      block.timestamp;
+    bool isAmount = amount <= conditions[payee].amount;
+
+    return isTime && isAmount;
   }
 
-  function _addAllowedPayee(address payee) internal {
-    allowedPayees[payee] = true;
+  function isAllowedPayee(address payee) public view returns (bool) {
+    return conditions[payee].isAllowed;
+  }
+
+  function _addAllowedPayee(
+    address payee,
+    uint256 amount,
+    SubscriptionPeriod timeInterval
+  ) internal {
+    uint256 paymentDuration = getPaymentDuration(timeInterval);
+    conditions[payee] = PaymentCondition(amount, paymentDuration, true);
   }
 
   function _removeAllowedPayee(address payee) internal {
-    allowedPayees[payee] = false;
+    delete conditions[payee];
   }
 }

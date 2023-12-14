@@ -1,12 +1,15 @@
 import { HardhatUserConfig } from "hardhat/config";
+import * as dotenv from "dotenv";
 
 import "@matterlabs/hardhat-zksync-node";
 import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-solc";
 import "@matterlabs/hardhat-zksync-verify";
 
+dotenv.config({ path: ".env" });
+
 const config: HardhatUserConfig = {
-  defaultNetwork: "dockerizedNode",
+  defaultNetwork: "inMemoryNode",
   networks: {
     zkSyncTestnet: {
       url: "https://testnet.era.zksync.dev",

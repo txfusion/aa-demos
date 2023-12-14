@@ -9,6 +9,7 @@
   "private": true,
   "scripts": {
     "deploy": "hardhat deploy-zksync --script deploy.ts",
+    "deploy-auto": "hardhat run deploy/automated-payments/deploy-auto-payments.ts",
     "interact": "hardhat deploy-zksync --script interact.ts",
     "compile": "hardhat compile",
     "clean": "hardhat clean",
