@@ -30,8 +30,19 @@ contract AutoPayment is PaymentHelper, IAutoPayment, Ownable {
     _;
   }
 
-  function executePayments() external onlyOwner {
-    lastCharged[msg.sender] = block.timestamp;
+  function getPaymentConditions(
+    address _payee
+  ) public view returns (uint256, uint256) {
+    return (
+      paymentConditions[_payee].amount,
+      paymentConditions[_payee].paymentDuration
+    );
+  }
+
+  // TODO: CHECK CONDITIONS BEFORE CALLING
+  function executePayment(address _subscriber, uint256 _amount) external {
+    // lastCharged[_subscriber] = block.timestamp;
+    IDelegableAccount(_subscriber).executeAutoPayment(_amount);
   }
 
   function addSubscriber(
@@ -60,4 +71,6 @@ contract AutoPayment is PaymentHelper, IAutoPayment, Ownable {
   ) external pure override returns (bool) {
     return interfaceId == type(IAutoPayment).interfaceId;
   }
+
+  receive() external payable {}
 }

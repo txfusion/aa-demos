@@ -1,4 +1,4 @@
 export const ADDRESS = {
-  delegableaccount: "0x60Aa68f9D0D736B9a0a716d04323Ba3b22602840",
-  autopayment: "0x65C899B5fb8Eb9ae4da51D67E1fc417c7CB7e964",
+  delegableaccount: "0x996462e0eAf00bF6BF0Ea15F29d715C0eD3906F1",
+  autopayment: "0x1A2894885076934dAf5a398Ff216c6d665707bbA",
 };

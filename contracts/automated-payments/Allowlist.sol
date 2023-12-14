@@ -30,7 +30,7 @@ contract Allowlist is PaymentHelper {
     address payee,
     uint256 amount
   ) public view returns (bool) {
-    bool isTime = conditions[payee].timeInterval + lastPayment[payee] <
+    bool isTime = conditions[payee].timeInterval + lastPayment[payee] <=
       block.timestamp;
     bool isAmount = amount <= conditions[payee].amount;
 
@@ -52,5 +52,11 @@ contract Allowlist is PaymentHelper {
 
   function _removeAllowedPayee(address payee) internal {
     delete conditions[payee];
+  }
+
+  function getPaymentConditions(
+    address _payee
+  ) public view returns (uint256, uint256) {
+    return (conditions[_payee].amount, conditions[_payee].timeInterval);
   }
 }

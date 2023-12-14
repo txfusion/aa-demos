@@ -295,11 +295,11 @@ contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
     _addAllowedPayee(_payee, _amount, _timeInterval);
 
     bytes4 autoPaymentInterfaceId = bytes4(
-      keccak256("addSubscriber(uint256,uint8)")
+      keccak256("addSubscriber(uint256, uint8)")
     );
 
     if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
-      AutoPayment(_payee).addSubscriber(_amount, _timeInterval);
+      IAutoPayment(_payee).addSubscriber(_amount, _timeInterval);
     }
   }
 
@@ -313,18 +313,20 @@ contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
     bytes4 autoPaymentInterfaceId = bytes4(keccak256("removeSubscriber()"));
 
     if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
-      AutoPayment(_payee).removeSubscriber();
+      IAutoPayment(_payee).removeSubscriber();
     }
   }
 
   /// @dev Execute auto-payment transfer to allowlisted receiver
   /// @param _ethAmount Amount of ETH to send
-  function executeAutoPayment(uint256 _ethAmount) external onlyAllowlisted {
+  function executeAutoPayment(uint256 _ethAmount) public onlyAllowlisted {
     bool isPaymentValid = isAutoPaymentAllowed(msg.sender, _ethAmount);
 
     if (!isPaymentValid) {
       revert InvalidPayment();
     }
+
+    lastPayment[msg.sender] = block.timestamp;
 
     (bool success, ) = payable(msg.sender).call{value: _ethAmount}("");
     require(
