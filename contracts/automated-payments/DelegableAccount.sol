@@ -17,6 +17,7 @@ import "./interfaces/IAutoPayment.sol";
 
 import "./Allowlist.sol";
 import "./AutoPayment.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
   using TransactionHelper for Transaction;
@@ -294,11 +295,7 @@ contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
   ) public onlyOwner {
     _addAllowedPayee(_payee, _amount, _timeInterval);
 
-    bytes4 autoPaymentInterfaceId = bytes4(
-      keccak256("addSubscriber(uint256, uint8)")
-    );
-
-    if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
+    if (IERC165(_payee).supportsInterface(type(IAutoPayment).interfaceId)) {
       IAutoPayment(_payee).addSubscriber(_amount, _timeInterval);
     }
   }
@@ -312,7 +309,7 @@ contract DelegableAccount is IAccount, IERC165, IERC1271, Ownable, Allowlist {
 
     bytes4 autoPaymentInterfaceId = bytes4(keccak256("removeSubscriber()"));
 
-    if (IAutoPayment(_payee).supportsInterface(autoPaymentInterfaceId)) {
+    if (IERC165(_payee).supportsInterface(type(IAutoPayment).interfaceId)) {
       IAutoPayment(_payee).removeSubscriber();
     }
   }

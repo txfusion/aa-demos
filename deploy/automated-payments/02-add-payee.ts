@@ -74,21 +74,6 @@ async function main() {
     accountContract.address
   );
   console.log("accountBalance", accountBalance.toString());
-
-  tx = await autoPaymentsContract.executePayment(
-    accountContract.address,
-    ALLOW_AMOUNT,
-    { gasLimit: 10_000_000 }
-  );
-
-  await tx.wait();
-
-  console.log("EXECUTE PAYMENT PAYEE FINISHED");
-
-  accountBalance = await deployer.zkWallet.provider.getBalance(
-    accountContract.address
-  );
-  console.log("accountBalance", accountBalance.toString());
 }
 
 main().catch((error) => {

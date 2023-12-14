@@ -3,11 +3,12 @@
 pragma solidity ^0.8.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {PaymentHelper} from "./PaymentHelper.sol";
 import {IDelegableAccount} from "./interfaces/IDelegableAccount.sol";
 import {IAutoPayment} from "./interfaces/IAutoPayment.sol";
 
-contract AutoPayment is PaymentHelper, IAutoPayment, Ownable {
+contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
   /// @dev subscriber => lastTimeCharged
   mapping(address => uint256) lastCharged;
 
@@ -17,13 +18,9 @@ contract AutoPayment is PaymentHelper, IAutoPayment, Ownable {
   constructor() Ownable() {}
 
   modifier onlyDelegableAccount(address subscriber) {
-    // Check if subscriber implements IDelegableAccount interface
-    bytes4 delegableAccountInterfaceId = bytes4(
-      keccak256("executeAutoPayment(uint256)")
-    );
     require(
-      IDelegableAccount(subscriber).supportsInterface(
-        delegableAccountInterfaceId
+      IERC165(subscriber).supportsInterface(
+        type(IDelegableAccount).interfaceId
       ),
       "Subscriber does not support IDelegableAccount interface."
     );
