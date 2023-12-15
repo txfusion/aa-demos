@@ -160,6 +160,20 @@ export const chargePaymaster = async (paymasterAddress: string) => {
     .then((res) => res.wait());
 };
 
+// Function to display a simple loading animation during execution
+export function displayLoadingAnimation(message = 'Processing...') {
+  const frames = ["|", "/", "-", "\\"];;
+  let i = 0;
+
+  const interval = setInterval(() => {
+    process.stdout.write(`\r${message} ${frames[i++]}`);
+    i %= frames.length;
+  }, 80);
+
+  return interval;
+}
+
+
 export function getToken() {
   return ContractFactory.getContract(
     readEnv("ERC20_TOKEN_CONTRACT"),
@@ -167,7 +181,31 @@ export function getToken() {
     getWallet(),
   );
 }
-
+// Fake data to pass into setGreeting function
+export function greetingData() {
+  return [
+    { text: "Hello", language: "English" },
+    { text: "Bonjour", language: "French" },
+    { text: "Hola", language: "Spanish" },
+    { text: "Ciao", language: "Italian" },
+    { text: "Konnichiwa", language: "Japanese" },
+    { text: "Namaste", language: "Hindi" },
+    { text: "Merhaba", language: "Turkish" },
+    { text: "Guten Tag", language: "German" },
+    { text: "Olá", language: "Portuguese" },
+    { text: "Salam", language: "Arabic" },
+    { text: "Salut", language: "Romanian" },
+    { text: "Aloha", language: "Hawaiian" },
+    { text: "Hej", language: "Swedish" },
+    { text: "Shalom", language: "Hebrew" },
+    { text: "Annyeonghaseyo", language: "Korean" },
+    { text: "Sawubona", language: "Zulu" },
+    { text: "Jambo", language: "Swahili" },
+    { text: "Szia", language: "Hungarian" },
+    { text: "Nǐ hǎo", language: "Chinese" },
+    { text: "Ahoj", language: "Czech" },
+  ];
+}
 /**
  * Rich wallets can be used for testing purposes.
  * Available on zkSync In-memory node and Dockerized node.
