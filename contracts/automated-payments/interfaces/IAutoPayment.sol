@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import {IPaymentHelper} from "./IPaymentHelper.sol";
+import {PaymentInterval} from "../libraries/PaymentHelper.sol";
 
-interface IAutoPayment is IPaymentHelper {
+interface IAutoPayment {
   event SubscriberAdded(
     address indexed _subscriber,
     uint256 indexed _amount,
@@ -12,7 +12,7 @@ interface IAutoPayment is IPaymentHelper {
   );
   event SubscriberRemoved(address indexed _subscriber);
 
-  function addSubscriber(uint256 amount, PaymentPeriod timeInterval) external;
+  function addSubscriber(uint256 amount, PaymentInterval timeInterval) external;
 
   function removeSubscriber() external;
 }

@@ -2,24 +2,37 @@
 
 pragma solidity ^0.8.0;
 
-import {IPaymentHelper} from "./interfaces/IPaymentHelper.sol";
+enum PaymentInterval {
+  MINUTE,
+  DAILY,
+  WEEKLY,
+  MONTHLY
+}
 
-contract PaymentHelper is IPaymentHelper {
+struct PaymentCondition {
+  uint256 amount;
+  uint256 timeInterval;
+  bool isAllowed;
+}
+
+error InvalidTimeInterval();
+
+library PaymentHelper {
   uint256 private constant MINUTE = 1 minutes;
   uint256 private constant DAY = 1 days;
   uint256 private constant WEEK = 7 days;
   uint256 private constant MONTH = 2628288; // average month duration in seconds
 
   function getPaymentDuration(
-    PaymentPeriod timeInterval
+    PaymentInterval timeInterval
   ) public pure returns (uint256 paymentDuration) {
-    if (timeInterval == PaymentPeriod.MINUTE) {
+    if (timeInterval == PaymentInterval.MINUTE) {
       paymentDuration = MINUTE;
-    } else if (timeInterval == PaymentPeriod.DAILY) {
+    } else if (timeInterval == PaymentInterval.DAILY) {
       paymentDuration = DAY;
-    } else if (timeInterval == PaymentPeriod.WEEKLY) {
+    } else if (timeInterval == PaymentInterval.WEEKLY) {
       paymentDuration = WEEK;
-    } else if (timeInterval == PaymentPeriod.MONTHLY) {
+    } else if (timeInterval == PaymentInterval.MONTHLY) {
       paymentDuration = MONTH;
     } else {
       revert InvalidTimeInterval();

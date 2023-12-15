@@ -3,12 +3,11 @@
 pragma solidity ^0.8.0;
 
 interface IDelegableAccount {
-  event SubscriberAdded();
-  event FailedAddingSubscriber();
-  event SubscriberRemoved();
-  event FailedRemovingSubscriber();
+  event AllowedPayeeAdded(address indexed payee);
+  event AllowedPayeeRemoved(address indexed payee);
+  event FailedRemovingSubscriber(address indexed subscriber);
 
-  error InvalidPayment();
+  error FailedAddingSubscriber(address subscriber);
 
   function executeAutoPayment(uint256 _ethAmount) external;
 }

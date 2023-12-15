@@ -4,22 +4,24 @@ pragma solidity ^0.8.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {PaymentHelper} from "./PaymentHelper.sol";
+import {PaymentHelper, PaymentInterval, PaymentCondition} from "./libraries/PaymentHelper.sol";
 import {IDelegableAccount} from "./interfaces/IDelegableAccount.sol";
 import {IAutoPayment} from "./interfaces/IAutoPayment.sol";
 
-contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
+contract AutoPayment is IAutoPayment, IERC165, Ownable {
+  using PaymentHelper for PaymentInterval;
+
   /// @dev subscriber => block timestamp of the last auto payment
   mapping(address => uint256) public lastCharged;
 
-  /// @dev subscriber => subscriptions conditions
-  mapping(address => SubscriptionCondition) paymentConditions;
+  /// @dev subscriber => payment conditions
+  mapping(address => PaymentCondition) paymentConditions;
 
   constructor() Ownable() {}
 
-  modifier onlyDelegableAccount(address _subscriber) {
+  modifier onlyDelegableAccount() {
     require(
-      IERC165(_subscriber).supportsInterface(
+      IERC165(msg.sender).supportsInterface(
         type(IDelegableAccount).interfaceId
       ),
       "Subscriber does not support IDelegableAccount interface."
@@ -29,10 +31,11 @@ contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
 
   function getPaymentConditions(
     address _payee
-  ) public view returns (uint256, uint256) {
+  ) public view returns (uint256, uint256, bool) {
     return (
       paymentConditions[_payee].amount,
-      paymentConditions[_payee].paymentDuration
+      paymentConditions[_payee].timeInterval,
+      paymentConditions[_payee].isAllowed
     );
   }
 
@@ -47,20 +50,21 @@ contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
   /// @param _timeInterval The time interval between two pull payments
   function addSubscriber(
     uint256 _amount,
-    PaymentPeriod _timeInterval
-  ) external onlyDelegableAccount(msg.sender) {
-    uint256 paymentDuration = getPaymentDuration(_timeInterval);
+    PaymentInterval _timeInterval
+  ) external onlyDelegableAccount {
+    uint256 paymentDuration = _timeInterval.getPaymentDuration();
 
-    paymentConditions[msg.sender] = SubscriptionCondition(
+    paymentConditions[msg.sender] = PaymentCondition(
       _amount,
-      paymentDuration
+      paymentDuration,
+      true
     );
 
     emit SubscriberAdded(msg.sender, _amount, paymentDuration);
   }
 
   /// @notice method only subscriber can call to abort auto payments
-  function removeSubscriber() external onlyDelegableAccount(msg.sender) {
+  function removeSubscriber() external {
     delete paymentConditions[msg.sender];
 
     emit SubscriberRemoved(msg.sender);
@@ -76,6 +80,12 @@ contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
   ) external pure override returns (bool) {
     return interfaceId == type(IAutoPayment).interfaceId;
   }
+
+  // TODO: Check if this is a safe way to withdraw
+  /// @notice method to withdraw funds from the contract
+  // function withdraw() external onlyOwner {
+  //   payable(msg.sender).transfer(address(this).balance);
+  // }
 
   receive() external payable {}
 }

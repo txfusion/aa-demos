@@ -2,14 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import {PaymentHelper} from "./PaymentHelper.sol";
+import {PaymentHelper, PaymentCondition, PaymentInterval} from "./libraries/PaymentHelper.sol";
 
-contract Allowlist is PaymentHelper {
-  struct PaymentCondition {
-    uint256 amount;
-    uint256 timeInterval;
-    bool isAllowed; // is payee allowed
-  }
+contract Allowlist {
+  using PaymentHelper for PaymentInterval;
 
   /// @dev payee address => auto payment condition
   mapping(address => PaymentCondition) public conditions;
@@ -17,36 +13,27 @@ contract Allowlist is PaymentHelper {
   /// @dev payee address => block timestamp of last payment
   mapping(address => uint256) public lastPayment;
 
-  modifier onlyAllowlisted() {
+  modifier onlyAllowedAutoPayment(uint256 amount) {
+    PaymentCondition memory condition = conditions[msg.sender];
     require(
-      conditions[msg.sender].isAllowed,
-      "Only allowlisted payees can trigger auto-payment"
+      condition.isAllowed,
+      "Only allowed payees can trigger auto-payment"
     );
-    // Continue execution if called from the allowlisted payee.
+    require(
+      condition.timeInterval + lastPayment[msg.sender] <= block.timestamp,
+      "Only after allowed auto-payment time interval"
+    );
+    require(amount <= condition.amount, "Only allowed auto-payment amount");
+    // Continue execution if all payment conditions are satisfied.
     _;
-  }
-
-  function isAutoPaymentAllowed(
-    address payee,
-    uint256 amount
-  ) public view returns (bool) {
-    bool isTime = conditions[payee].timeInterval + lastPayment[payee] <=
-      block.timestamp;
-    bool isAmount = amount <= conditions[payee].amount;
-
-    return isTime && isAmount;
-  }
-
-  function isAllowedPayee(address payee) public view returns (bool) {
-    return conditions[payee].isAllowed;
   }
 
   function _addAllowedPayee(
     address payee,
     uint256 amount,
-    PaymentPeriod timeInterval
+    PaymentInterval timeInterval
   ) internal {
-    uint256 paymentDuration = getPaymentDuration(timeInterval);
+    uint256 paymentDuration = timeInterval.getPaymentDuration();
     conditions[payee] = PaymentCondition(amount, paymentDuration, true);
   }
 
