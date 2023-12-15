@@ -32,19 +32,17 @@ contract DelegableAccount is IDelegableAccount, IERC165, Account, Allowlist {
     _addAllowedPayee(_payee, _amount, _timeInterval);
 
     // make an external function call to add payee
-    if (IERC165(_payee).supportsInterface(type(IAutoPayment).interfaceId)) {
-      bytes memory data = abi.encodeWithSelector(
-        IAutoPayment.addSubscriber.selector,
-        _amount,
-        _timeInterval
-      );
+    bytes memory data = abi.encodeWithSelector(
+      IAutoPayment.addSubscriber.selector,
+      _amount,
+      _timeInterval
+    );
 
-      (bool success, ) = _payee.call(data);
-      if (success) {
-        emit SubscriberAdded();
-      } else {
-        emit FailedAddingSubscriber();
-      }
+    (bool success, ) = _payee.call(data);
+    if (success) {
+      emit SubscriberAdded();
+    } else {
+      emit FailedAddingSubscriber();
     }
   }
 
@@ -55,19 +53,15 @@ contract DelegableAccount is IDelegableAccount, IERC165, Account, Allowlist {
   function removeAllowedPayee(address _payee) public onlyOwner {
     _removeAllowedPayee(_payee);
 
-    if (IERC165(_payee).supportsInterface(type(IAutoPayment).interfaceId)) {
-      bytes memory data = abi.encodeWithSelector(
-        IAutoPayment.removeSubscriber.selector
-      );
+    bytes memory data = abi.encodeWithSelector(
+      IAutoPayment.removeSubscriber.selector
+    );
 
-      (bool success, ) = _payee.call(data);
-      if (success) {
-        emit SubscriberRemoved();
-      } else {
-        emit FailedRemovingSubscriber();
-      }
-
-      // IAutoPayment(_payee).removeSubscriber();
+    (bool success, ) = _payee.call(data);
+    if (success) {
+      emit SubscriberRemoved();
+    } else {
+      emit FailedRemovingSubscriber();
     }
   }
 
