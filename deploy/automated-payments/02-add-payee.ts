@@ -21,6 +21,10 @@ async function main() {
     deployer.zkWallet
   ).attach(ADDRESS.delegableaccount);
 
+  const autoPaymentsContract = new AutoPayment__factory(
+    deployer.zkWallet
+  ).attach(ADDRESS.autopayment);
+
   // Supplying Delegable Account with ETH
   await (
     await deployer.zkWallet.sendTransaction({
@@ -29,51 +33,66 @@ async function main() {
     })
   ).wait();
 
-  const autoPaymentsContract = new AutoPayment__factory(
-    deployer.zkWallet
-  ).attach(ADDRESS.autopayment);
+  console.log("=============================================");
 
+  // Add a new payee
   let tx = await accountContract.addAllowedPayee(
     ADDRESS.autopayment,
     ALLOW_AMOUNT,
     0
   );
-  await tx.wait();
 
-  console.log("ADD ALLOW PAYEE FINISHED");
+  let receipt = await tx.wait();
+  console.log(receipt.status == 1 && "New Payee Added ✅");
 
-  const conditions = await accountContract.getPaymentConditions(
+  /**
+   * Conditions of Auto Payment
+   */
+  const accountConditions = await accountContract.getPaymentConditions(
     ADDRESS.autopayment
   );
-  console.log(conditions[0].toString(), conditions[1].toString());
+
+  console.log("\n----> Delegable Account - Payment Conditions <----");
+
+  console.log("Amount: ", accountConditions[0].toString(), "🚧");
+  console.log("Time interval: ", accountConditions[1].toString(), "⏰");
 
   const autoPaymentConditions = await autoPaymentsContract.getPaymentConditions(
     ADDRESS.delegableaccount
   );
-  console.log(
-    autoPaymentConditions[0].toString(),
-    autoPaymentConditions[1].toString()
-  );
+  console.log("\n----> Auto Payments - Payment Conditions <----");
+  console.log("Amount: ", autoPaymentConditions[0].toString(), "🚧");
+  console.log("Time interval: ", autoPaymentConditions[1].toString(), "⏰");
 
+  // account balance before pull payment
   let accountBalance = await deployer.zkWallet.provider.getBalance(
     accountContract.address
   );
-  console.log("accountBalance", accountBalance.toString());
+  console.log(
+    "\n*Account balance 💸 - before pull payment",
+    accountBalance.toString()
+  );
 
+  /**
+   * Pull Payment Execution
+   */
   tx = await autoPaymentsContract.executePayment(
     accountContract.address,
     ALLOW_AMOUNT,
     { gasLimit: 10_000_000 }
   );
 
-  await tx.wait();
+  receipt = await tx.wait();
+  console.log(receipt.status == 1 && "\nPull Payment Executed ✅");
 
-  console.log("EXECUTE PAYMENT PAYEE FINISHED");
-
+  // account balance after pull payment
   accountBalance = await deployer.zkWallet.provider.getBalance(
     accountContract.address
   );
-  console.log("accountBalance", accountBalance.toString());
+  console.log(
+    "\n*Account balance 💸 - after pull payment",
+    accountBalance.toString()
+  );
 }
 
 main().catch((error) => {

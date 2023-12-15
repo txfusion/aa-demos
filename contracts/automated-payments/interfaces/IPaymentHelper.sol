@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 
 interface IPaymentHelper {
-  error InvalidtimeInterval();
+  error InvalidTimeInterval();
 
-  enum SubscriptionPeriod {
+  enum PaymentPeriod {
     MINUTE,
     DAILY,
     WEEKLY,

@@ -11,18 +11,18 @@ contract PaymentHelper is IPaymentHelper {
   uint256 private constant MONTH = 2628288; // average month duration in seconds
 
   function getPaymentDuration(
-    SubscriptionPeriod timeInterval
+    PaymentPeriod timeInterval
   ) public pure returns (uint256 paymentDuration) {
-    if (timeInterval == SubscriptionPeriod.MINUTE) {
+    if (timeInterval == PaymentPeriod.MINUTE) {
       paymentDuration = MINUTE;
-    } else if (timeInterval == SubscriptionPeriod.DAILY) {
+    } else if (timeInterval == PaymentPeriod.DAILY) {
       paymentDuration = DAY;
-    } else if (timeInterval == SubscriptionPeriod.WEEKLY) {
+    } else if (timeInterval == PaymentPeriod.WEEKLY) {
       paymentDuration = WEEK;
-    } else if (timeInterval == SubscriptionPeriod.MONTHLY) {
+    } else if (timeInterval == PaymentPeriod.MONTHLY) {
       paymentDuration = MONTH;
     } else {
-      revert InvalidtimeInterval();
+      revert InvalidTimeInterval();
     }
   }
 }

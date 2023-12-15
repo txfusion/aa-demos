@@ -44,7 +44,7 @@ contract Allowlist is PaymentHelper {
   function _addAllowedPayee(
     address payee,
     uint256 amount,
-    SubscriptionPeriod timeInterval
+    PaymentPeriod timeInterval
   ) internal {
     uint256 paymentDuration = getPaymentDuration(timeInterval);
     conditions[payee] = PaymentCondition(amount, paymentDuration, true);

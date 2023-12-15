@@ -9,17 +9,17 @@ import {IDelegableAccount} from "./interfaces/IDelegableAccount.sol";
 import {IAutoPayment} from "./interfaces/IAutoPayment.sol";
 
 contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
-  /// @dev subscriber => lastTimeCharged
-  mapping(address => uint256) lastCharged;
+  /// @dev subscriber => block timestamp of the last auto payment
+  mapping(address => uint256) public lastCharged;
 
   /// @dev subscriber => subscriptions conditions
   mapping(address => SubscriptionCondition) paymentConditions;
 
   constructor() Ownable() {}
 
-  modifier onlyDelegableAccount(address subscriber) {
+  modifier onlyDelegableAccount(address _subscriber) {
     require(
-      IERC165(subscriber).supportsInterface(
+      IERC165(_subscriber).supportsInterface(
         type(IDelegableAccount).interfaceId
       ),
       "Subscriber does not support IDelegableAccount interface."
@@ -42,20 +42,28 @@ contract AutoPayment is PaymentHelper, IAutoPayment, IERC165, Ownable {
     IDelegableAccount(_subscriber).executeAutoPayment(_amount);
   }
 
+  /// @notice The method to add a new auto payments subscriber
+  /// @param _amount The max amount of ETH that can be pulled from a subscriber
+  /// @param _timeInterval The time interval between two pull payments
   function addSubscriber(
-    uint256 amount,
-    SubscriptionPeriod timeInterval
+    uint256 _amount,
+    PaymentPeriod _timeInterval
   ) external onlyDelegableAccount(msg.sender) {
-    uint256 paymentDuration = getPaymentDuration(timeInterval);
+    uint256 paymentDuration = getPaymentDuration(_timeInterval);
 
     paymentConditions[msg.sender] = SubscriptionCondition(
-      amount,
+      _amount,
       paymentDuration
     );
+
+    emit SubscriberAdded(msg.sender, _amount, paymentDuration);
   }
 
+  /// @notice method only subscriber can call to abort auto payments
   function removeSubscriber() external onlyDelegableAccount(msg.sender) {
     delete paymentConditions[msg.sender];
+
+    emit SubscriberRemoved(msg.sender);
   }
 
   /// @notice method to prove that this contract inherits IAccount interface, called
