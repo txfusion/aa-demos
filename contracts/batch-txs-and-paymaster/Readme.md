@@ -6,9 +6,13 @@ This sub-directory presents a Proof of Concept (PoC) showcasing the implementati
 
 ## Paymaster
 
+![Paymaster Flows](./diagrams/paymaster-transaction-flow.png)
+
 **Paymasters in zkSync** allow for fee compensation and ERC20 token fee payments, enhancing user experience and flexibility. Users interacting with a paymaster should provide the non-zero paymaster address in their EIP712 transaction.
 
 #### _Two built-in flow:_
+
+![Paymaster Flows](./diagrams/paymaster-methods.png)
 
 ### General Paymaster
 
