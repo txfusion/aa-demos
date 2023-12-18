@@ -1,32 +1,23 @@
 import hre from "hardhat";
-import { expect } from "chai";
+import { expect, assert } from "chai";
+import { describe } from "mocha";
 import { Wallet, Provider } from "zksync-web3";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { ethers } from "ethers";
-import { describe } from "mocha";
 
 import { richWallet } from "../../utils/rich_wallet";
+import { PAYMENT_INTERVALS } from "../../utils/constants";
 
 import {
   DelegableAccount__factory,
-  DelegableAccountStub__factory,
   AutoPayment__factory,
-  AutoPaymentStub__factory,
 } from "../../typechain";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
-
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5");
 const LIMIT_AMOUNT = ethers.utils.parseEther("1");
-
 const GAS_LIMIT = { gasLimit: 10_000_000 };
-
-const PAYMENT_PERIOD = {
-  MINUTE: 0,
-  DAILY: 1,
-  WEEKLY: 2,
-  MONTHLY: 3,
-};
+const PAYMENT_INTERVAL = PAYMENT_INTERVALS.MINUTE;
 
 describe("Payments integration test", async () => {
   async function setup() {
@@ -38,60 +29,39 @@ describe("Payments integration test", async () => {
     const deployer = new Deployer(hre, deployerWallet);
 
     /**
-     * Names
+     * Contract names
      */
 
     const delegableAccountContractName = "DelegableAccount";
-    // this contract doesnt support IDelegableAccount
-    const stubDelegableAccountContractName = "DelegableAccountStub";
-
     const autoPaymentContractName = "AutoPayment";
-    const stubAutoPaymentContractName = "AutoPaymentStub";
 
     /**
      * Artifacts
      */
 
-    // Accounts
     const delegableAccountArtifact = await deployer.loadArtifact(
       delegableAccountContractName
     );
 
-    const stubDelegableAccountArtifact = await deployer.loadArtifact(
-      stubDelegableAccountContractName
-    );
-
-    // Auto Payment
     const autoPaymentArtifact = await deployer.loadArtifact(
       autoPaymentContractName
-    );
-    const stubAutoPaymentArtifact = await deployer.loadArtifact(
-      stubAutoPaymentContractName
     );
 
     /**
      * Deployment
      */
 
-    // Account
     const delegableAccountContract = await deployer.deploy(
       delegableAccountArtifact,
       [deployer.zkWallet.address]
     );
 
-    const stubDelegableAccountContract = await deployer.deploy(
-      stubDelegableAccountArtifact,
-      [deployer.zkWallet.address]
-    );
-
-    // Auto Payment
     const autoPaymentContract = await deployer.deploy(autoPaymentArtifact, []);
-    const stubAutoPaymentContract = await deployer.deploy(
-      stubAutoPaymentArtifact,
-      []
-    );
 
-    // Supplying Delegable Account with ETH
+    /**
+     * Funding DelegableAccount with ETH
+     */
+
     await (
       await deployer.zkWallet.sendTransaction({
         to: delegableAccountContract.address,
@@ -103,15 +73,10 @@ describe("Payments integration test", async () => {
       delegableAccount: new DelegableAccount__factory(deployer.zkWallet).attach(
         delegableAccountContract.address
       ),
-      stubDelegableAccount: new DelegableAccountStub__factory(
-        deployer.zkWallet
-      ).attach(stubDelegableAccountContract.address),
       autoPayment: new AutoPayment__factory(deployer.zkWallet).attach(
         autoPaymentContract.address
       ),
-      stubAutoPayment: new AutoPaymentStub__factory(deployer.zkWallet).attach(
-        stubAutoPaymentContract.address
-      ),
+      provider: deployerWallet.provider,
       deployerWallet,
       stranger,
     };
@@ -123,16 +88,25 @@ describe("Payments integration test", async () => {
     context = await setup();
   });
 
-  it("should add payee/subscribe", async () => {
+  it("addAllowedPayee() :: add payee & subscribe", async () => {
     const { delegableAccount, autoPayment } = context;
+
+    /**
+     * addAllowedPayee
+     */
+
     await expect(
       delegableAccount.addAllowedPayee(
         autoPayment.address,
         LIMIT_AMOUNT,
-        PAYMENT_PERIOD.MINUTE,
+        PAYMENT_INTERVAL.id,
         GAS_LIMIT
       )
     ).to.be.fulfilled;
+
+    /**
+     * Payment conditions
+     */
 
     const [accountAmountLimit, accountTimeLimit] =
       await delegableAccount.getPaymentConditions(autoPayment.address);
@@ -140,67 +114,106 @@ describe("Payments integration test", async () => {
     const [autoPaymentAmountLimit, autoPaymentTimeLimit] =
       await autoPayment.getPaymentConditions(delegableAccount.address);
 
-    expect(
-      accountAmountLimit.eq(LIMIT_AMOUNT),
-      "Amount limit on the delegable account contract should match the intended amount limit"
+    /**
+     * Assertion
+     */
+
+    assert.equal(
+      accountAmountLimit.toString(),
+      LIMIT_AMOUNT.toString(),
+      "The limit amount on the DelegableAccount contract does not match LIMIT_AMOUNT"
     );
-    expect(
-      autoPaymentAmountLimit.eq(LIMIT_AMOUNT),
-      "Amount limit on the auto payment contract should match the intended amount limit"
+    assert.equal(
+      autoPaymentAmountLimit.toString(),
+      LIMIT_AMOUNT.toString(),
+      "The limit amount on the DelegableAccount contract does not match LIMIT_AMOUNT"
     );
 
-    expect(
-      accountTimeLimit.eq(LIMIT_AMOUNT),
-      "Time Interval on the delegable account contract should match the intended time interval"
+    assert.equal(
+      +accountTimeLimit.toString(),
+      PAYMENT_INTERVAL.value,
+      "Payment interval on the DelegableAccount contract does not match PAYMENT_INTERVAL"
     );
-    expect(
-      autoPaymentTimeLimit.eq(LIMIT_AMOUNT),
-      "Time Interval on the auto payment contract should match the intended time interval"
+    assert.equal(
+      +autoPaymentTimeLimit.toString(),
+      PAYMENT_INTERVAL.value,
+      "Payment interval on the AutoPayment contract does not match PAYMENT_INTERVAL"
     );
   });
 
-  it("should execute pull payment - after subscribing", async () => {
-    const { delegableAccount, autoPayment, deployerWallet } = context;
-    const accountBalanceBeforePull = await deployerWallet.provider.getBalance(
+  it("executePayment() :: working", async () => {
+    const { delegableAccount, autoPayment, provider } = context;
+
+    /**
+     * Balance of contracts before making f-call
+     */
+
+    const accountBalanceBeforePull = await provider.getBalance(
       delegableAccount.address
     );
-    const autoPaymentBalanceBeforePull =
-      await deployerWallet.provider.getBalance(autoPayment.address);
+    const autoPaymentBalanceBeforePull = await provider.getBalance(
+      autoPayment.address
+    );
+
+    /**
+     * executePayment
+     */
 
     await expect(
       autoPayment.executePayment(delegableAccount.address, LIMIT_AMOUNT)
     ).to.be.fulfilled;
 
-    const accountBalanceAfterPull = await deployerWallet.provider.getBalance(
+    /**
+     * Balance of contracts after making f-call
+     */
+
+    const accountBalanceAfterPull = await provider.getBalance(
       delegableAccount.address
     );
-    const autoPaymentBalanceAfterPull =
-      await deployerWallet.provider.getBalance(autoPayment.address);
-
-    expect(
-      accountBalanceAfterPull.add(LIMIT_AMOUNT).eq(accountBalanceBeforePull),
-      "Wrong Delegable Account balance after pull payment"
+    const autoPaymentBalanceAfterPull = await provider.getBalance(
+      autoPayment.address
     );
-    expect(
-      autoPaymentBalanceBeforePull
-        .add(LIMIT_AMOUNT)
-        .eq(autoPaymentBalanceAfterPull),
-      "Wrong Auto Payment balance after pull payment"
+
+    /**
+     * Assertion
+     */
+
+    assert.equal(
+      accountBalanceAfterPull.add(LIMIT_AMOUNT).toString(),
+      accountBalanceBeforePull.toString(),
+      "DelegableAccount balance does not match the expected balance AFTER pull payment"
+    );
+    assert.equal(
+      autoPaymentBalanceBeforePull.add(LIMIT_AMOUNT).toString(),
+      autoPaymentBalanceAfterPull.toString(),
+      "AutoPayment balance does not match the expected balance AFTER pull payment"
     );
   });
 
-  it("should fail pull payment - wrong time", async () => {
+  it("executePayment() :: fails - wrong time", async () => {
     const { delegableAccount, autoPayment } = context;
+    /**
+     * executePayment
+     */
 
     await expect(
       autoPayment.executePayment(delegableAccount.address, LIMIT_AMOUNT)
     ).to.be.rejected;
   });
 
-  it("should remove payee/unsubscribe", async () => {
+  it("removeAllowedPayee() :: remove payee & unsubscribe", async () => {
     const { delegableAccount, autoPayment } = context;
+
+    /**
+     * removeAllowedPayee
+     */
+
     await expect(delegableAccount.removeAllowedPayee(autoPayment.address)).to.be
       .fulfilled;
+
+    /**
+     * Payment conditions
+     */
 
     const [accountAmountLimit, accountTimeLimit] =
       await delegableAccount.getPaymentConditions(autoPayment.address);
@@ -208,114 +221,82 @@ describe("Payments integration test", async () => {
     const [autoPaymentAmountLimit, autoPaymentTimeLimit] =
       await autoPayment.getPaymentConditions(delegableAccount.address);
 
-    expect(
-      accountAmountLimit.eq(0),
-      "Amount limit on the delegable account contract should match the intended amount limit"
+    /**
+     * Assertion
+     */
+    assert.equal(
+      +accountAmountLimit.toString(),
+      0,
+      "DelegableAccount :: getPaymentConditions :: wrong limit amount "
     );
-    expect(
-      autoPaymentAmountLimit.eq(0),
-      "Amount limit on the auto payment contract should match the intended amount limit"
-    );
-
-    expect(
-      accountTimeLimit.eq(0),
-      "Time Interval on the delegable account contract should match the intended time interval"
-    );
-    expect(
-      autoPaymentTimeLimit.eq(0),
-      "Time Interval on the auto payment contract should match the intended time interval"
-    );
-  });
-
-  it("should add payee when auto payment is not compatible with IAutoPayment", async () => {
-    const { delegableAccount, stubAutoPayment } = context;
-
-    await expect(
-      delegableAccount.addAllowedPayee(
-        stubAutoPayment.address,
-        LIMIT_AMOUNT,
-        PAYMENT_PERIOD.MINUTE,
-        GAS_LIMIT
-      )
-    ).to.be.fulfilled;
-
-    const [accountAmountLimit, accountTimeLimit] =
-      await delegableAccount.getPaymentConditions(stubAutoPayment.address);
-
-    const [autoPaymentAmountLimit, autoPaymentTimeLimit] =
-      await stubAutoPayment.getPaymentConditions(delegableAccount.address);
-
-    console.log(accountAmountLimit.toString(), accountTimeLimit.toString());
-
-    expect(
-      accountAmountLimit.eq(LIMIT_AMOUNT),
-      "Amount limit on the delegable account contract should match the intended amount limit"
+    assert.equal(
+      +autoPaymentAmountLimit.toString(),
+      0,
+      "The limit amount on the DelegableAccount contract does not match 0"
     );
 
-    expect(
-      autoPaymentAmountLimit.eq(LIMIT_AMOUNT),
-      "Amount limit on the auto payment contract should match the intended amount limit"
+    assert.equal(
+      +accountTimeLimit.toString(),
+      0,
+      "Payment interval on the DelegableAccount contract does not match 0"
     );
-
-    expect(
-      accountTimeLimit.eq(0),
-      "Time Interval on the delegable account contract should be 0"
-    );
-    expect(
-      autoPaymentTimeLimit.eq(0),
-      "Time Interval on the stub auto payment contract should should be 0"
+    assert.equal(
+      +autoPaymentTimeLimit.toString(),
+      0,
+      "Payment interval on the AutoPayment contract does not match 0"
     );
   });
 
-  it("should perform pull payment when IAutoPayment is not supported", async () => {
-    const { delegableAccount, stubAutoPayment, deployerWallet } = context;
+  it("withdraw() :: working - send ETH to owner", async () => {
+    const { autoPayment, deployerWallet, provider } = context;
 
-    const accountBalanceBeforePull = await deployerWallet.provider.getBalance(
-      delegableAccount.address
+    /**
+     * Balance of contracts before making f-call
+     */
+
+    const ownerBalanceBeforeWithdrawal = await provider.getBalance(
+      deployerWallet.address
     );
-    const autoPaymentBalanceBeforePull =
-      await deployerWallet.provider.getBalance(stubAutoPayment.address);
-
-    await expect(
-      stubAutoPayment.executePayment(
-        delegableAccount.address,
-        LIMIT_AMOUNT,
-        GAS_LIMIT
-      )
-    ).to.be.fulfilled;
-
-    const accountBalanceAfterPull = await deployerWallet.provider.getBalance(
-      delegableAccount.address
+    const autoPaymentBalanceBeforeWithdrawal = await provider.getBalance(
+      autoPayment.address
     );
-    const autoPaymentBalanceAfterPull =
-      await deployerWallet.provider.getBalance(stubAutoPayment.address);
 
-    expect(
-      accountBalanceAfterPull.add(LIMIT_AMOUNT).eq(accountBalanceBeforePull),
-      "Wrong Delegable Account balance after pull payment"
+    /**
+     * Withdraw ETH to owner
+     */
+
+    const tx = await expect(autoPayment.withdraw()).to.be.fulfilled;
+    const receipt = await tx.wait();
+
+    const gasCost = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+    /**
+     * Balance of contracts after making f-call
+     */
+
+    const ownerBalanceAfterWithdrawal = await provider.getBalance(
+      deployerWallet.address
     );
-    expect(
-      autoPaymentBalanceBeforePull
-        .add(LIMIT_AMOUNT)
-        .eq(autoPaymentBalanceAfterPull),
-      "Wrong Auto Payment balance after pull payment"
+    const autoPaymentBalanceAfterWithdrawal = await provider.getBalance(
+      autoPayment.address
+    );
+
+    /**
+     * Assertion
+     */
+
+    assert.equal(
+      ownerBalanceBeforeWithdrawal
+        .add(autoPaymentBalanceBeforeWithdrawal)
+        .sub(gasCost)
+        .toString(),
+      ownerBalanceAfterWithdrawal.toString(),
+      "Owner balance does not match the expected balance AFTER Withdrawal"
+    );
+    assert.equal(
+      +autoPaymentBalanceAfterWithdrawal.toString(),
+      0,
+      "AutoPayment balance does not match the expected balance AFTER Withdrawal"
     );
   });
-
-  it("should remove payee/unsubscribe locally - payee contract not compatible IAutoPayment", async () => {
-    const { delegableAccount, autoPayment } = context;
-  });
-
-  it("should not add a new subscriber - account contract not compatible IDelegateAccount", async () => {
-    const { delegableAccount, autoPayment } = context;
-  });
-
-  // should add new payee
-  // should execute pull payment
-  // should fail pull payment - wrong time
-  // should fail pull payment- wrong amount
-  // should remove subscriber
-
-  // should add new payee locally - payee not compatible interface
-  // should remove new payee locally - payee not compatible interface
 });

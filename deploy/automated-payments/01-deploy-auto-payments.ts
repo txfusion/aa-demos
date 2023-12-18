@@ -1,7 +1,6 @@
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { Wallet } from "zksync-web3";
 import * as hre from "hardhat";
-import { ADDRESS } from "../../utils/constants";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 

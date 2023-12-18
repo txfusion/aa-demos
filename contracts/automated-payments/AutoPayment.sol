@@ -81,11 +81,10 @@ contract AutoPayment is IAutoPayment, IERC165, Ownable {
     return interfaceId == type(IAutoPayment).interfaceId;
   }
 
-  // TODO: Check if this is a safe way to withdraw
   /// @notice method to withdraw funds from the contract
-  // function withdraw() external onlyOwner {
-  //   payable(msg.sender).transfer(address(this).balance);
-  // }
+  function withdraw() external onlyOwner {
+    payable(msg.sender).call{value: address(this).balance}("");
+  }
 
   receive() external payable {}
 }

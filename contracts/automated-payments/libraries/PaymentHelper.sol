@@ -25,7 +25,7 @@ library PaymentHelper {
 
   function getPaymentDuration(
     PaymentInterval timeInterval
-  ) public pure returns (uint256 paymentDuration) {
+  ) internal pure returns (uint256 paymentDuration) {
     if (timeInterval == PaymentInterval.MINUTE) {
       paymentDuration = MINUTE;
     } else if (timeInterval == PaymentInterval.DAILY) {
