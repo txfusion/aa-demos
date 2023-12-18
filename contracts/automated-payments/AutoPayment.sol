@@ -83,7 +83,10 @@ contract AutoPayment is IAutoPayment, IERC165, Ownable {
 
   /// @notice method to withdraw funds from the contract
   function withdraw() external onlyOwner {
-    payable(msg.sender).call{value: address(this).balance}("");
+    (bool success, ) = payable(msg.sender).call{value: address(this).balance}(
+      ""
+    );
+    require(success, "Failed to withdraw funds.");
   }
 
   receive() external payable {}
