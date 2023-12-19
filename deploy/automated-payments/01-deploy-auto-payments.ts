@@ -1,6 +1,7 @@
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { Wallet } from "zksync-web3";
 import * as hre from "hardhat";
+import { deployContract } from "../../utils/deployment";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 
@@ -8,27 +9,13 @@ async function main() {
   const zkWallet = new Wallet(PRIVATE_KEY);
   const deployer = new Deployer(hre, zkWallet);
 
-  const accountContractName = "DelegableAccount";
-  const autoPaymentContractName = "AutoPayment";
-
-  const accountArtifact = await deployer.loadArtifact(accountContractName);
-  const autoPaymentArtifact = await deployer.loadArtifact(
-    autoPaymentContractName
+  await deployContract(
+    deployer,
+    "DelegableAccount",
+    [deployer.zkWallet.address],
+    true
   );
-
-  const accountContract = await deployer.deploy(accountArtifact, [
-    deployer.zkWallet.address,
-  ]);
-  const autoPaymentContract = await deployer.deploy(autoPaymentArtifact, []);
-
-  console.log(
-    `${accountContractName.toLowerCase()}: "${accountContract.address}",`
-  );
-  console.log(
-    `${autoPaymentContractName.toLowerCase()}: "${
-      autoPaymentContract.address
-    }",`
-  );
+  await deployContract(deployer, "AutoPayment", [], true);
 }
 
 main().catch((error) => {
