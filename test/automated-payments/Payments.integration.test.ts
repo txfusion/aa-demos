@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { expect, assert } from "chai";
 import { describe } from "mocha";
-import { Wallet, Provider } from "zksync-web3";
+import { Wallet, Provider, Contract } from "zksync-web3";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { ethers } from "ethers";
 
@@ -11,6 +11,7 @@ import { PAYMENT_INTERVALS } from "../../utils/constants";
 import {
   DelegableAccount__factory,
   AutoPayment__factory,
+  DelegableAccountStub__factory,
 } from "../../typechain";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
@@ -29,34 +30,25 @@ describe("Payments integration test", async () => {
     const deployer = new Deployer(hre, deployerWallet);
 
     /**
-     * Contract names
-     */
-
-    const delegableAccountContractName = "DelegableAccount";
-    const autoPaymentContractName = "AutoPayment";
-
-    /**
-     * Artifacts
-     */
-
-    const delegableAccountArtifact = await deployer.loadArtifact(
-      delegableAccountContractName
-    );
-
-    const autoPaymentArtifact = await deployer.loadArtifact(
-      autoPaymentContractName
-    );
-
-    /**
      * Deployment
      */
 
-    const delegableAccountContract = await deployer.deploy(
-      delegableAccountArtifact,
+    const delegableAccountContract = await deployContract(
+      deployer,
+      "DelegableAccount",
+      [deployer.zkWallet.address]
+    );
+    const delegableAccountStubContract = await deployContract(
+      deployer,
+      "DelegableAccountStub",
       [deployer.zkWallet.address]
     );
 
-    const autoPaymentContract = await deployer.deploy(autoPaymentArtifact, []);
+    const autoPaymentContract = await deployContract(
+      deployer,
+      "AutoPayment",
+      []
+    );
 
     /**
      * Funding DelegableAccount with ETH
@@ -73,6 +65,9 @@ describe("Payments integration test", async () => {
       delegableAccount: new DelegableAccount__factory(deployer.zkWallet).attach(
         delegableAccountContract.address
       ),
+      delegableAccountStub: new DelegableAccountStub__factory(
+        deployer.zkWallet
+      ).attach(delegableAccountStubContract.address),
       autoPayment: new AutoPayment__factory(deployer.zkWallet).attach(
         autoPaymentContract.address
       ),
@@ -198,7 +193,7 @@ describe("Payments integration test", async () => {
 
     await expect(
       autoPayment.executePayment(delegableAccount.address, LIMIT_AMOUNT)
-    ).to.be.rejected;
+    ).to.be.reverted;
   });
 
   it("removeAllowedPayee() :: remove payee & unsubscribe", async () => {
@@ -245,6 +240,23 @@ describe("Payments integration test", async () => {
       0,
       "Payment interval on the AutoPayment contract does not match 0"
     );
+  });
+
+  it("addAllowedPayee() :: incompatible DelegableAccount", async () => {
+    const { delegableAccountStub, autoPayment } = context;
+
+    /**
+     * addAllowedPayee
+     */
+
+    await expect(
+      delegableAccountStub.addAllowedPayee(
+        autoPayment.address,
+        LIMIT_AMOUNT,
+        PAYMENT_INTERVAL.id,
+        GAS_LIMIT
+      )
+    ).to.be.reverted;
   });
 
   it("withdraw() :: working - send ETH to owner", async () => {
@@ -300,3 +312,12 @@ describe("Payments integration test", async () => {
     );
   });
 });
+
+const deployContract = async (
+  deployer: Deployer,
+  contractName: string,
+  constructorArguments?: any[] | undefined
+): Promise<Contract> => {
+  const contractArtifact = await deployer.loadArtifact(contractName);
+  return await deployer.deploy(contractArtifact, constructorArguments);
+};

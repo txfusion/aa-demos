@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import * as dotenv from "dotenv";
 
+import "@nomiclabs/hardhat-waffle";
 import "@matterlabs/hardhat-zksync-node";
 import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-solc";
