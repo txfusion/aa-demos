@@ -8,12 +8,14 @@ export const GAS_LIMIT = {
 export async function deployContract(
   deployer: Deployer,
   contractName: string,
-  constructorArguments: any[] = []
+  constructorArguments: any[] = [],
+  verbose: boolean = false
 ): Promise<Contract> {
   const artifact = await deployer.loadArtifact(contractName);
   const contract = await deployer.deploy(artifact, constructorArguments);
-
-  console.log(`${contractName.toLowerCase()}: "${contract.address}",`);
+  if (verbose) {
+    console.log(`${contractName.toLowerCase()}: "${contract.address}",`);
+  }
 
   return contract;
 }

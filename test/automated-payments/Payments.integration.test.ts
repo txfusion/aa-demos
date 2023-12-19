@@ -13,6 +13,7 @@ import {
   AutoPayment__factory,
   DelegableAccountStub__factory,
 } from "../../typechain";
+import { deployContract } from "../../utils/deployment";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5");
@@ -257,6 +258,42 @@ describe("Payments integration test", async () => {
         GAS_LIMIT
       )
     ).to.be.reverted;
+
+    /**
+     * Payment conditions
+     */
+
+    const [accountAmountLimit, accountTimeLimit] =
+      await delegableAccountStub.getPaymentConditions(autoPayment.address);
+
+    const [autoPaymentAmountLimit, autoPaymentTimeLimit] =
+      await autoPayment.getPaymentConditions(delegableAccountStub.address);
+
+    /**
+     * Assertion
+     */
+
+    assert.equal(
+      accountAmountLimit.toString(),
+      "0",
+      "The limit amount on the DelegableAccount contract does not match 0"
+    );
+    assert.equal(
+      autoPaymentAmountLimit.toString(),
+      "0",
+      "The limit amount on the DelegableAccount contract does not match 0"
+    );
+
+    assert.equal(
+      +accountTimeLimit.toString(),
+      0,
+      "Payment interval on the DelegableAccount contract does not match 0"
+    );
+    assert.equal(
+      +autoPaymentTimeLimit.toString(),
+      0,
+      "Payment interval on the AutoPayment contract does not match 0"
+    );
   });
 
   it("withdraw() :: working - send ETH to owner", async () => {
@@ -312,12 +349,3 @@ describe("Payments integration test", async () => {
     );
   });
 });
-
-const deployContract = async (
-  deployer: Deployer,
-  contractName: string,
-  constructorArguments?: any[] | undefined
-): Promise<Contract> => {
-  const contractArtifact = await deployer.loadArtifact(contractName);
-  return await deployer.deploy(contractArtifact, constructorArguments);
-};
