@@ -176,7 +176,7 @@ You can use General Paymaster already deployed to interact with greeter contract
 
 ### Approval Paymaster Interaction Script
 
-    You can use General Paymaster already deployed to interact with ERC20Token contract to mint:
+You can use Approval Paymaster already deployed to interact with ERC20Token contract to mint token:
 
     yarn hardhat deploy-zksync --script deploy/use-approval-paymaster.ts --network preferredNetwork
 
