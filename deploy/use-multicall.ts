@@ -5,11 +5,13 @@ import {
   LOCAL_RICH_WALLETS,
   getProvider,
   displayLoadingAnimation,
+  getToken,
 } from "./utils";
 import { ethers } from "ethers";
 
 const CONTRACT_ADDRESS = readEnv("MULTICALL_3_CONTRACT");
 const ERC20_TOKEN_CONTRACT = readEnv("ERC20_TOKEN_CONTRACT");
+const token = getToken();
 
 export default async function () {
   console.log(`Running script to interact with contract ${CONTRACT_ADDRESS}`);
@@ -22,35 +24,27 @@ export default async function () {
     contractArtifact.abi,
     getWallet(),
   );
-  const erc20Artifact = await hre.artifacts.readArtifact("ERC20Token");
-  const erc20 = new ethers.Contract(
-    ERC20_TOKEN_CONTRACT,
-    erc20Artifact.abi,
-    getWallet(),
-  );
-  const bal = await erc20.balanceOf(getWallet().address);
+
+  const bal = await token.balanceOf(getWallet().address);
   console.log("Caller ERC20 balance", bal.toString());
+
   // approve Multicall contract to spend Token
-  await erc20
+  await token
     .connect(getWallet())
-    .functions.approve(CONTRACT_ADDRESS, 100)
+    .functions.approve(CONTRACT_ADDRESS, LOCAL_RICH_WALLETS.length)
     .then((res) => res.wait());
 
   // batch call the function on multiple addresses and push to the array
-  const functionCalls = LOCAL_RICH_WALLETS.map((wallet, index) => {
-    const callData = erc20.interface.encodeFunctionData("transferFrom", [
+  const functionCalls = LOCAL_RICH_WALLETS.map((wallet) => ({
+    target: ERC20_TOKEN_CONTRACT,
+    allowFailure: false,
+    callData: token.interface.encodeFunctionData("transferFrom", [
       getWallet().address,
       wallet.address,
       1,
-    ]);
-    console.log(`Address ${index + 1}: "${wallet.address}"`);
-
-    return {
-      target: ERC20_TOKEN_CONTRACT,
-      allowFailure: false,
-      callData: callData,
-    };
-  });
+    ]),
+  }));
+  console.log(functionCalls);
 
   const gasPrice = await getProvider().getGasPrice();
   const gasLimit = await contract.estimateGas.aggregate3(functionCalls);
@@ -59,18 +53,18 @@ export default async function () {
   console.log(`Transaction fee estimation is :>> ${fee.toString()}\n`);
 
   const res = await contract
-    .aggregate3(functionCalls, {
-      gasLimit: 1_000_000,
-    })
+    .aggregate3(functionCalls)
     .then((res) => res.wait());
-  // console.log({ res });
+  console.log({ res });
+
   // Run contract read function
   for (let i = 0; i < LOCAL_RICH_WALLETS.length; i++) {
     const wallet = LOCAL_RICH_WALLETS[i];
-    const balance = await erc20.balanceOf(wallet.address);
-    console.log(`Balance of Address ${i + 1}: ${wallet.address} is ${balance.toString()}`);
+    const balance = await token.balanceOf(wallet.address);
+    console.log(
+      `Balance of Address ${i + 1}: ${wallet.address} is ${balance.toString()}`,
+    );
   }
-  
 
   clearInterval(loadingAnimation);
   console.log("\nExecution complete!");
