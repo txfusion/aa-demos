@@ -10,6 +10,7 @@
   "scripts": {
     "deploy": "hardhat deploy-zksync --script deploy.ts",
     "interact": "hardhat deploy-zksync --script interact.ts",
+    "batch": "hardhat deploy-zksync --script use-multicall-batch.ts",
     "compile": "hardhat compile",
     "clean": "hardhat clean",
     "test": "hardhat test --network hardhat"

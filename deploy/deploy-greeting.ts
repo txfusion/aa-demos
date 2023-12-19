@@ -5,6 +5,6 @@ import { deployContract } from "./utils";
 // as well as verify it on Block Explorer if possible for the network
 export default async function () {
   const contractArtifactName = "Greeter";
-  const constructorArguments = ["Hi there!"];
+  const constructorArguments = ["ENG", "Hi there!"];
   await deployContract(contractArtifactName, constructorArguments);
 }

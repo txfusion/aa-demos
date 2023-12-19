@@ -20,16 +20,19 @@ export default async function () {
   );
 
   // Run contract read function
-  const response = await contract.greet();
+  const response = await contract.greet("ENG");
   console.log(`Current message is: ${response}`);
 
   // Run contract write function
-  const transaction = await contract.setGreeting("Hello people!");
+  const transaction = await contract.setGreeting(
+    "French",
+    "Bonjour TxCitizen!",
+  );
   console.log(`Transaction hash of setting new message: ${transaction.hash}`);
 
   // Wait until transaction is processed
   await transaction.wait();
 
   // Read message after transaction
-  console.log(`The message now is: ${await contract.greet()}`);
+  console.log(`The message now is: ${await contract.greet("French")}`);
 }

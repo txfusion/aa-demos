@@ -22,7 +22,7 @@ export default async function () {
   );
 
   // Run contract read function
-  const response = await contract.greet();
+  const response = await contract.greet("ENG");
   console.log(`Current message is: ${response}`);
 
   let paymasterBalance = await getProvider().getBalance(PAYMASTER_ADDRESS);
@@ -37,15 +37,16 @@ export default async function () {
     innerInput: new Uint8Array(),
   });
 
-  const newMessage = `Hello people! ${Date().toLocaleLowerCase()}`;
+  const newMessage: string = `"Hello people! ${Date().toLocaleLowerCase()}"`;
+  const lang: string = "English";
 
   // Estimate gas fee for mint transaction
-  const gasLimit = await contract.estimateGas.setGreeting(newMessage);
+  const gasLimit = await contract.estimateGas.setGreeting(lang, newMessage);
 
   const fee = gasPrice.mul(gasLimit.toString());
   console.log("Transaction fee estimation is :>> ", fee.toString());
 
-  const transaction = await contract.setGreeting(newMessage, {
+  const transaction = await contract.setGreeting(lang, newMessage, {
     customData: {
       paymasterParams: paymasterParams,
       gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
@@ -56,7 +57,7 @@ export default async function () {
   await transaction.wait();
 
   // Read message after transaction
-  console.log(`The message now is: ${await contract.greet()}`);
+  console.log(`The message now is: ${await contract.greet(lang)}`);
 
   paymasterBalance = await getProvider().getBalance(PAYMASTER_ADDRESS);
 

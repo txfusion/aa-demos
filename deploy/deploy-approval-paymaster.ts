@@ -6,7 +6,7 @@ import {
   getToken,
 } from "./utils";
 
-const TOKEN_AMOUNT_TO_MINT = 100;
+const TOKEN_AMOUNT_TO_MINT = 1000;
 export default async function () {
   const token = getToken();
   const paymaster = await deployContract("ApprovalPaymaster", [token.address]);

@@ -1,18 +1,24 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
 contract Greeter {
-    string private greeting;
-
-    constructor(string memory _greeting) {
-        greeting = _greeting;
+    struct GreetMsg {
+        string greeting;
+        string language;
     }
 
-    function greet() public view returns (string memory) {
-        return greeting;
+    mapping(string => GreetMsg) private greetings;
+
+    constructor(string memory _lang, string memory _greeting) {
+        greetings[_lang] = GreetMsg(_greeting, _lang);
     }
 
-    function setGreeting(string memory _greeting) public {
-        greeting = _greeting;
+    function greet(string memory _lang) public view returns (string memory, string memory) {
+        return ( greetings[_lang].language, greetings[_lang].greeting);
     }
+
+    function setGreeting(string memory _lang, string memory _greeting) public {
+        greetings[_lang] = GreetMsg(_greeting, _lang);
+    }
+
 }
