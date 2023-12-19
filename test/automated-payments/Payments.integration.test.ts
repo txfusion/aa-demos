@@ -1,23 +1,23 @@
 import hre from "hardhat";
 import { expect, assert } from "chai";
 import { describe } from "mocha";
-import { Wallet, Provider, Contract } from "zksync-web3";
+import { Wallet, Provider } from "zksync-web3";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { ethers } from "ethers";
 
-import { richWallet } from "../../utils/rich_wallet";
-import { PAYMENT_INTERVALS } from "../../utils/constants";
+import { richWallet, PAYMENT_INTERVALS, deployContract } from "../../utils";
 
 import {
   DelegableAccount__factory,
   AutoPayment__factory,
   DelegableAccountStub__factory,
 } from "../../typechain";
-import { deployContract } from "../../utils/deployment";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
-const TRANSFER_AMOUNT = ethers.utils.parseEther("5");
-const LIMIT_AMOUNT = ethers.utils.parseEther("1");
+
+const TRANSFER_AMOUNT = ethers.utils.parseEther("5"); // Amount of ETH to fund DelegableAccount
+const LIMIT_AMOUNT = ethers.utils.parseEther("1"); // Limit of a single Pull Payment
+
 const GAS_LIMIT = { gasLimit: 10_000_000 };
 const PAYMENT_INTERVAL = PAYMENT_INTERVALS.MINUTE;
 
