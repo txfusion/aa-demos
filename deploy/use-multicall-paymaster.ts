@@ -42,7 +42,7 @@ export default async function () {
   );
 
   //  array of function calls
-  const functionCalls = greetingData().map((data) => ({
+  const functionCalls = greetingData.map((data) => ({
     target: GREETER_CONTRACT,
     allowFailure: true,
     callData: greeter.interface.encodeFunctionData("setGreeting", [
@@ -84,7 +84,7 @@ export default async function () {
     console.log("\n transaction status: ", data.status);
   });
   // Run contract read function
-  for (const data of greetingData()) {
+  for (const data of greetingData) {
     const greeting = await greeter.greet(data.language);
     console.log(`The greeting in ${data.language}: ${greeting}`);
   }
