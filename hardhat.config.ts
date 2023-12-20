@@ -9,11 +9,11 @@ const config: HardhatUserConfig = {
   defaultNetwork: "dockerizedNode",
   networks: {
     zkSyncTestnet: {
-      url: "https://testnet.era.zksync.dev",
+      url: "https://sepolia.era.zksync.dev",
       ethNetwork: "goerli",
       zksync: true,
       verifyURL:
-        "https://zksync2-testnet-explorer.zksync.dev/contract_verification",
+        "https://explorer.sepolia.era.zksync.dev/contract_verification",
     },
     zkSyncMainnet: {
       url: "https://mainnet.era.zksync.io",
