@@ -1,7 +1,13 @@
 import * as hre from "hardhat";
-import { getWallet, readEnv, getToken, getProvider, displayLoadingAnimation, greetingData } from "./utils";
+import {
+  getWallet,
+  readEnv,
+  getToken,
+  getProvider,
+  displayLoadingAnimation,
+  greetingData,
+} from "./utils";
 import { ethers } from "ethers";
-import { Interface } from "ethers/lib/utils";
 import { utils } from "zksync-web3";
 
 const CONTRACT_ADDRESS = readEnv("MULTICALL_3_CONTRACT");
@@ -13,11 +19,7 @@ const provider = getProvider();
 export default async function () {
   const loadingAnimation = displayLoadingAnimation();
   console.log(`Running script to interact with contract ${CONTRACT_ADDRESS}`);
-  console.log(
-    `Paymaster ERC20 token balance is before execution: ${await token.balanceOf(
-      PAYMASTER_ADDRESS,
-    )}`,
-  );
+
   // Load compiled contract info
   const contractArtifact = await hre.artifacts.readArtifact("Multicall3");
   const greeterArtifact = await hre.artifacts.readArtifact("Greeter");
@@ -38,64 +40,52 @@ export default async function () {
     `Paymaster ETH balance is before payment:   ${paymasterBalance.toString()}`,
   );
 
-  
-  const updateGreeterInterface = new Interface([
-    "function setGreeting(string memory _lang, string memory _greeting)",
-  ]);
   //  array of function calls
-  const functionCalls: any[] = [];
-
-  // batch call the function on multiple addresses and push to the array
-  function greetings(greetings) {
-    greetings.forEach((greet) => {
-      const callData = updateGreeterInterface.encodeFunctionData( "setGreeting",
-        [`${greet.language}`, ` is  ${greet.text} TxCitizens!`],
-      );
-      functionCalls.push({
-        target: GREETER_CONTRACT,
-        allowFailure: true,
-        callData: callData,
-      });
-    });
-  }
-  greetings(greetingData());
-
-  
-
+  const functionCalls = greetingData().map((data) => ({
+    target: GREETER_CONTRACT,
+    allowFailure: true,
+    callData: greeter.interface.encodeFunctionData("setGreeting", [
+      `${data.language}`,
+      ` is  ${data.text} TxCitizens!`,
+    ]),
+  }));
   // Encoding the "ApprovalBased" paymaster flow's input
   const paymasterParams = utils.getPaymasterParams(PAYMASTER_ADDRESS, {
     type: "ApprovalBased",
     token: token.address,
-    // set minimalAllowance as we defined in the paymaster contract
     minimalAllowance: ethers.BigNumber.from(1),
-    // empty bytes as testnet paymaster does not use innerInput
     innerInput: new Uint8Array(),
   });
 
   // Transaction Gas Estimate
   const gasPrice = await getProvider().getGasPrice();
   const gasLimit = await contract.estimateGas.aggregate3(functionCalls);
-
   const fee = gasPrice.mul(gasLimit.toString());
   console.log("Transaction fee estimation is :>> ", fee.toString());
 
-  const customData = {
-    paymasterParams: paymasterParams,
-    gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-  };
-  const res = await contract
-    .aggregate3(functionCalls, {
-      customData: customData,
-    })
-    .then((res) => res.wait());
-  console.log({ res });
+  const res = await contract.aggregate3(functionCalls, {
+    customData: {
+      paymasterParams,
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    },
+  });
+  const receipt = await res.wait();
 
+  /**
+   * check the status of each transaction in the multicall using
+   *  getTransactionReceipt function
+   **/
+  const TransactionReciept = receipt.events.map((event) =>
+    event.getTransactionReceipt(),
+  );
+  const conformedTransaction = await Promise.all(TransactionReciept);
+  conformedTransaction.forEach((data) => {
+    console.log("\n transaction status: ", data.status);
+  });
   // Run contract read function
-  const response = await greeter.greet("Arabic");
-  console.log(`Current message is: ${response}`);
-  for (const language of greetingData()) {
-    const greeting = await greeter.greet(language.language);
-    console.log(`The greeting in $ ${greeting}`);
+  for (const data of greetingData()) {
+    const greeting = await greeter.greet(data.language);
+    console.log(`The greeting in ${data.language}: ${greeting}`);
   }
 
   console.log(
