@@ -181,30 +181,12 @@ export function getToken() {
   );
 }
 // Fake data to pass into setGreeting function
-export function greetingData() {
-  return [
-    // { text: "Hello", language: "English" },
-    // { text: "Bonjour", language: "French" },
-    { text: "Hola", language: "Spanish" },
-    // { text: "Ciao", language: "Italian" },
-    // { text: "Konnichiwa", language: "Japanese" },
-    // { text: "Namaste", language: "Hindi" },
-    // { text: "Merhaba", language: "Turkish" },
-    // { text: "Guten Tag", language: "German" },
-    // { text: "Olá", language: "Portuguese" },
-    // { text: "Salam", language: "Arabic" },
-    // { text: "Salut", language: "Romanian" },
-    // { text: "Aloha", language: "Hawaiian" },
-    // { text: "Hej", language: "Swedish" },
-    // { text: "Shalom", language: "Hebrew" },
-    // { text: "Annyeonghaseyo", language: "Korean" },
-    // { text: "Sawubona", language: "Zulu" },
-    // { text: "Jambo", language: "Swahili" },
-    // { text: "Szia", language: "Hungarian" },
-    // { text: "Nǐ hǎo", language: "Chinese" },
-    // { text: "Ahoj", language: "Czech" },
-  ];
-}
+export const greetingData = [
+  { text: "Hello", language: "English" },
+  { text: "Bonjour", language: "French" },
+  { text: "Hola", language: "Spanish" },
+  { text: "Ciao", language: "Italian" },
+];
 /**
  * Rich wallets can be used for testing purposes.
  * Available on zkSync In-memory node and Dockerized node.

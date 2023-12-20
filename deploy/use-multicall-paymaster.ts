@@ -20,6 +20,7 @@ export default async function () {
   const loadingAnimation = displayLoadingAnimation();
   console.log(`Running script to interact with contract ${CONTRACT_ADDRESS}`);
 
+
   // Load compiled contract info
   const contractArtifact = await hre.artifacts.readArtifact("Multicall3");
   const greeterArtifact = await hre.artifacts.readArtifact("Greeter");
