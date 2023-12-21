@@ -699,16 +699,14 @@
     proper-lockfile "^4.1.2"
     semver "^7.5.1"
 
-"@matterlabs/hardhat-zksync-solc@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.npmjs.org/@matterlabs/hardhat-zksync-solc/-/hardhat-zksync-solc-0.4.1.tgz"
-  integrity sha512-fdlGf/2yZR5ihVNc2ubea1R/nNFXRONL29Fgz5FwB3azB13rPb76fkQgcFIg9zSufHsEy6zUUT029NkxLNA9Sw==
+"@matterlabs/hardhat-zksync-solc@0.3.17":
+  version "0.3.17"
+  resolved "https://registry.npmjs.org/@matterlabs/hardhat-zksync-solc/-/hardhat-zksync-solc-0.3.17.tgz"
+  integrity sha512-aZgQ0yfXW5xPkfuEH1d44ncWV4T2LzKZd0VVPo4PL5cUrYs2/II1FaEDp5zsf3FxOR1xT3mBsjuSrtJkk4AL8Q==
   dependencies:
     "@nomiclabs/hardhat-docker" "^2.0.0"
     chalk "4.1.2"
     dockerode "^3.3.4"
-    fs-extra "^11.1.1"
-    semver "^7.5.1"
 
 "@matterlabs/hardhat-zksync-solc@1.0.0":
   version "1.0.0"
@@ -733,13 +731,12 @@
     "@openzeppelin/upgrades-core" "~1.27.0"
     dockerode "^3.3.4"
 
-"@matterlabs/hardhat-zksync-verify@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.npmjs.org/@matterlabs/hardhat-zksync-verify/-/hardhat-zksync-verify-0.2.1.tgz"
-  integrity sha512-6awofVwsGHlyFMNTZcp05DPHpriSmmhBw0q+OC/Kn9xbdqT8E7fMJa6irvJH590UugxGerKrZDIY6uM6rwAjqQ==
+"@matterlabs/hardhat-zksync-verify@^0.1.8":
+  version "0.1.8"
+  resolved "https://registry.npmjs.org/@matterlabs/hardhat-zksync-verify/-/hardhat-zksync-verify-0.1.8.tgz"
+  integrity sha512-Ss8smBeX/h58NOaGQwQCGdYjkcQE9C0BX+iak5fWt49E58mDunnMsVhVogkWqO1QWq0LsdKLAuQO3blbvgVzFQ==
   dependencies:
-    "@matterlabs/hardhat-zksync-solc" "0.4.1"
-    "@nomicfoundation/hardhat-verify" "^1.0.2"
+    "@matterlabs/hardhat-zksync-solc" "0.3.17"
     axios "^1.4.0"
     chalk "4.1.2"
     dockerode "^3.3.4"
@@ -955,7 +952,7 @@
   dependencies:
     ethereumjs-util "^7.1.4"
 
-"@nomicfoundation/hardhat-verify@^1.0.2", "@nomicfoundation/hardhat-verify@^1.1.1":
+"@nomicfoundation/hardhat-verify@^1.1.1":
   version "1.1.1"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-verify/-/hardhat-verify-1.1.1.tgz"
   integrity sha512-9QsTYD7pcZaQFEA3tBb/D/oCStYDiEVDN7Dxeo/4SCyHRSm86APypxxdOMEPlGmXsAvd+p1j/dTODcpxb8aztA==
@@ -1005,7 +1002,7 @@
   resolved "https://registry.npmjs.org/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.2.3.tgz"
   integrity sha512-YhzPdzb612X591FOe68q+qXVXGG2ANZRvDo0RRUtimev85rCrAlv/TLMEZw5c+kq9AbzocLTVX/h2jVIFPL9Xg==
 
-"@nomiclabs/hardhat-etherscan@^3.1.0", "@nomiclabs/hardhat-etherscan@^3.1.7":
+"@nomiclabs/hardhat-etherscan@^3.1.0", "@nomiclabs/hardhat-etherscan@^3.1.2", "@nomiclabs/hardhat-etherscan@^3.1.7":
   version "3.1.7"
   resolved "https://registry.npmjs.org/@nomiclabs/hardhat-etherscan/-/hardhat-etherscan-3.1.7.tgz"
   integrity sha512-tZ3TvSgpvsQ6B6OGmo1/Au6u8BrAkvs1mIC/eURA3xgIfznUZBhmpne8hv7BXUzw9xNL3fXdpOYgOQlVMTcoHQ==

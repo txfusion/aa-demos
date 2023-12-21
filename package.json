@@ -9,6 +9,7 @@
   "private": true,
   "scripts": {
     "deploy": "hardhat deploy-zksync --script deploy.ts",
+    "deploy:auth-tx-testnet": "hardhat deploy-zksync --script deploy-authtx.ts --network zkSyncTestnet --show-stack-traces",
     "deploy:auth-tx": "hardhat deploy-zksync --script deploy-authtx.ts",
     "interact": "hardhat deploy-zksync --script interact.ts",
     "compile": "hardhat clean && hardhat compile",
@@ -22,7 +23,7 @@
     "@matterlabs/hardhat-zksync-deploy": "^0.6.5",
     "@matterlabs/hardhat-zksync-node": "^0.0.1-beta.6",
     "@matterlabs/hardhat-zksync-solc": "^0.4.2",
-    "@matterlabs/hardhat-zksync-verify": "^0.2.1",
+    "@matterlabs/hardhat-zksync-verify": "^0.1.8",
     "@matterlabs/zksync-contracts": "^0.6.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",

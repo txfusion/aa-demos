@@ -1,6 +1,6 @@
 import * as hre from "hardhat";
 import { BigNumber } from "ethers";
-import { deployContract } from "./utils";
+import { deployContract, verify } from "./utils";
 
 export default async function () {
   const contractArtifactName = "TokenAuthorisable";
@@ -25,7 +25,9 @@ export default async function () {
     `Deploying the TokenAuthorisable contract on "${hre.network.name}" network...`,
   );
 
-  await deployContract(contractArtifactName, constructorArguments, {
-    noVerify: true,
-  });
+  const contract = await deployContract(
+    contractArtifactName,
+    constructorArguments,
+  );
+  await verify(contract.address);
 }

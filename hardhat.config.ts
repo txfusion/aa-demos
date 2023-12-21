@@ -10,7 +10,7 @@ import "@matterlabs/hardhat-zksync-chai-matchers";
 
 const config: HardhatUserConfig = {
   // Note: Slither has to use regular solc to compile contracts, so have it work on non-zksync Hardhat
-  defaultNetwork: process.env.RUN_SLITHER ? "hardhat" : "inMemoryNode",
+  defaultNetwork: process.env.RUN_SLITHER ? "zkSyncTestnet" : "inMemoryNode",
   networks: {
     zkSyncTestnet: {
       url: "https://testnet.era.zksync.dev",
@@ -41,7 +41,7 @@ const config: HardhatUserConfig = {
     },
   },
   zksolc: {
-    version: "latest",
+    version: "1.3.18",
     settings: {
       // find all available options in the official documentation
       // https://era.zksync.io/docs/tools/hardhat/hardhat-zksync-solc.html#configuration
