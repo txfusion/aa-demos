@@ -9,14 +9,14 @@ import {
   deployContract,
   getProvider,
   getWallet,
-} from "../deploy/utils";
+  greetingData,
+} from "../../deploy/utils";
 
 const TESTNET_PROVIDER_URL = "http://localhost:3050";
-
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5"); // Amount of ETH to fund paymaster
 const TOKEN_AMOUNT_TO_MINT = 1000;
 
-describe("Payments integration test", async () => {
+describe("Paymaster integration test", async () => {
   async function setup() {
     const provider = new Provider(TESTNET_PROVIDER_URL);
 
@@ -42,11 +42,15 @@ describe("Payments integration test", async () => {
       "Hi there!",
     ]);
     const deployedMulticallContract = await deployContract("Multicall3", []);
+    const deployedGeneralPaymaster = await deployContract(
+      "GeneralPaymaster",
+      [],
+    );
     const paymasterContract = await deployContract("ApprovalPaymaster", [
       deployedErc20Contract.address,
     ]);
+    const genPaymasterAddr = deployedGeneralPaymaster.address;
     const paymasterAddress = paymasterContract.address;
-    console.log("paymaster -------->", paymasterAddress);
 
     /**
      * Funding paymaster with ETH
@@ -59,15 +63,25 @@ describe("Payments integration test", async () => {
       })
       .then((res) => res.wait());
 
+    await deployer.zkWallet
+      .sendTransaction({
+        to: genPaymasterAddr,
+        value: TRANSFER_AMOUNT,
+      })
+      .then((res) => res.wait());
+
     return {
       deployerWallet,
       deployedErc20Contract,
+      deployedGeneralPaymaster,
       erc20ContractAddress: deployedErc20Contract.address,
       paymasterContract,
       deployedMulticallContract,
       deployedGreeterContract,
+      greeterAddress: deployedGreeterContract.address,
       deployerAddress: deployerWallet.address,
       paymasterAddress,
+      genPaymasterAddr,
       receiverWallet,
     };
   }
@@ -81,9 +95,8 @@ describe("Payments integration test", async () => {
   it("should mint ERC20 token to wallet () :: ", async () => {
     const { deployerAddress, deployedErc20Contract } = context;
 
-    await (
-      await deployedErc20Contract.mint(deployerAddress, TOKEN_AMOUNT_TO_MINT)
-    ).wait();
+    
+      await deployedErc20Contract.mint(deployerAddress, TOKEN_AMOUNT_TO_MINT).then((res) => res.wait())
     const balance = await deployedErc20Contract.balanceOf(deployerAddress);
     console.log("minted token ==================", Number(balance));
 
@@ -96,7 +109,7 @@ describe("Payments integration test", async () => {
     const lang = "French";
 
     // Set the greeting
-    await (await deployedGreeterContract.setGreeting(lang, greeting)).wait();
+    await deployedGreeterContract.setGreeting(lang, greeting).then((res) => res.wait())
 
     // Get the returned value from the greet function
     const returnedValue = await deployedGreeterContract.greet("French");
@@ -136,12 +149,11 @@ describe("Payments integration test", async () => {
     };
 
     // Mint token 1000 to the deployer address
-    await (
+    
       await deployedErc20Contract.mint(deployerAddress, TOKEN_AMOUNT_TO_MINT, {
         // paymaster info
         customData: customData,
-      })
-    ).wait();
+      }).then((res) => res.wait())
 
     const TOKEN_AMOUNT_TO_TRANSFER = 100;
 
@@ -161,19 +173,16 @@ describe("Payments integration test", async () => {
       await deployedErc20Contract.balanceOf(receiverWallet);
     const newPaymasterBalance =
       await deployedErc20Contract.balanceOf(paymasterAddress);
+    console.log("=========receiverBalance==========", Number(receiverBalance));
     console.log(
-      "\n =========receiverBalance==========",
-      Number(receiverBalance),
-    );
-    console.log(
-      "\n ========PaymasterBalance==========",
+      "========PaymasterBalance==========",
       Number(newPaymasterBalance),
     );
     const paymasterETHBalance = await getProvider().getBalance(
       paymasterContract.address,
     );
     console.log(
-      "\n =========PaymasterETHBalance==========",
+      "=========PaymasterETHBalance==========",
       paymasterETHBalance.toString(),
     );
 
@@ -207,7 +216,6 @@ describe("Payments integration test", async () => {
       paymasterParams: paymasterParams,
       gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
     };
-    console.log("TOKEN_AMOUNT_TO_TRANSFER \n");
 
     const TOKEN_AMOUNT_TO_TRANSFER = 100;
     const TOKEN_AMOUNT_OF_TRANSFERFROM = 1;
@@ -250,7 +258,7 @@ describe("Payments integration test", async () => {
     );
     const conformedTransaction = await Promise.all(TransactionReciept);
     conformedTransaction.forEach((data) => {
-      console.log("\n transaction status: ", data.status);
+      console.log("transaction status: ", data.status);
       // assert that the status is 1 i.e success
       assert(data.status === 1);
     });
@@ -268,5 +276,67 @@ describe("Payments integration test", async () => {
     // assertions
     assert(balOfAddressFour.eq(TOKEN_AMOUNT_OF_TRANSFERFROM));
     assert(balOfPaymaster.eq(4));
+  });
+  it("should use geenral paymaster to pay for gas for Multicall transaction:: Sponsored Payment", async function () {
+    const {
+      genPaymasterAddr,
+      deployedMulticallContract,
+      deployedGreeterContract,
+      greeterAddress,
+    } = context;
+    const paymasterBalance = await getProvider().getBalance(genPaymasterAddr);
+    console.log(
+      `GeneralPaymaster ETH balance is ${paymasterBalance.toString()}`,
+    );
+
+    //  array of function calls
+    const functionCalls = greetingData.map((data) => ({
+      target: greeterAddress,
+      allowFailure: true,
+      callData: deployedGreeterContract.interface.encodeFunctionData(
+        "setGreeting",
+        [`${data.language}`, ` is  ${data.text} TxCitizens!`],
+      ),
+    }));
+    const paymasterParams = utils.getPaymasterParams(genPaymasterAddr, {
+      type: "General",
+      // empty bytes as testnet paymaster does not use innerInput
+      innerInput: new Uint8Array(),
+    });
+
+    const res = await deployedMulticallContract.aggregate3(functionCalls, {
+      customData: {
+        paymasterParams,
+        gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+      },
+    });
+    const receipt = await res.wait();
+    /**
+     * check the status of each transaction in the multicall using
+     *  getTransactionReceipt function
+     **/
+    const TransactionReciept = receipt.events.map((event) =>
+      event.getTransactionReceipt(),
+    );
+    const conformedTransaction = await Promise.all(TransactionReciept);
+    conformedTransaction.forEach((data) => {
+      console.log(
+        "transaction status and confirmations of sponsored payment of each transaction: ",
+        data.status,data.confirmations
+      );
+      // assert that the status is 1 i.e success
+      assert(data.status === 1);
+      assert(data.confirmations >= 1);
+    });
+    const presentPaymasterBalance =
+      await getProvider().getBalance(genPaymasterAddr);
+    // Run contract read function
+    for (const data of greetingData) {
+      const greeting = await deployedGreeterContract.greet(data.language);
+      expect(greeting[1]).to.equal(` is  ${data.text} TxCitizens!`);
+    }
+    console.log(
+      `GeneralPaymaster ETH balance is ${presentPaymasterBalance.toString()}`,
+    );
   });
 });
