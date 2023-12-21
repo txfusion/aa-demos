@@ -95,8 +95,9 @@ describe("Paymaster integration test", async () => {
   it("should mint ERC20 token to wallet () :: ", async () => {
     const { deployerAddress, deployedErc20Contract } = context;
 
-    
-      await deployedErc20Contract.mint(deployerAddress, TOKEN_AMOUNT_TO_MINT).then((res) => res.wait())
+    await deployedErc20Contract
+      .mint(deployerAddress, TOKEN_AMOUNT_TO_MINT)
+      .then((res) => res.wait());
     const balance = await deployedErc20Contract.balanceOf(deployerAddress);
     console.log("minted token ==================", Number(balance));
 
@@ -109,7 +110,9 @@ describe("Paymaster integration test", async () => {
     const lang = "French";
 
     // Set the greeting
-    await deployedGreeterContract.setGreeting(lang, greeting).then((res) => res.wait())
+    await deployedGreeterContract
+      .setGreeting(lang, greeting)
+      .then((res) => res.wait());
 
     // Get the returned value from the greet function
     const returnedValue = await deployedGreeterContract.greet("French");
@@ -149,11 +152,13 @@ describe("Paymaster integration test", async () => {
     };
 
     // Mint token 1000 to the deployer address
-    
-      await deployedErc20Contract.mint(deployerAddress, TOKEN_AMOUNT_TO_MINT, {
+
+    await deployedErc20Contract
+      .mint(deployerAddress, TOKEN_AMOUNT_TO_MINT, {
         // paymaster info
         customData: customData,
-      }).then((res) => res.wait())
+      })
+      .then((res) => res.wait());
 
     const TOKEN_AMOUNT_TO_TRANSFER = 100;
 
@@ -322,7 +327,8 @@ describe("Paymaster integration test", async () => {
     conformedTransaction.forEach((data) => {
       console.log(
         "transaction status and confirmations of sponsored payment of each transaction: ",
-        data.status,data.confirmations
+        data.status,
+        data.confirmations,
       );
       // assert that the status is 1 i.e success
       assert(data.status === 1);
