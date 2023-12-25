@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { expect, assert } from "chai";
 import { describe } from "mocha";
-import { Wallet, Provider, ContractFactory, utils } from "zksync-web3";
+import { Wallet, Provider, utils } from "zksync-web3";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { ethers } from "ethers";
 import {
@@ -12,7 +12,7 @@ import {
   greetingData,
 } from "../../deploy/utils";
 
-const TESTNET_PROVIDER_URL = "http://localhost:3050";
+const TESTNET_PROVIDER_URL = "http://localhost:8011";
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5"); // Amount of ETH to fund paymaster
 const TOKEN_AMOUNT_TO_MINT = 1000;
 
@@ -27,28 +27,33 @@ describe("Paymaster integration test", async () => {
     const receiver = new Wallet(LOCAL_RICH_WALLETS[1].privateKey, provider);
     const receiverWallet = receiver.address;
     const deployer = new Deployer(hre, deployerWallet);
-
     /**
      * Deployment of RC20, Greeter, Multicall and Paymaster contracts
      */
 
-    const deployedErc20Contract = await deployContract("ERC20Token", [
-      "TOKEN",
-      "TOKEN",
-      18,
-    ]);
-    const deployedGreeterContract = await deployContract("Greeter", [
-      "ENG",
-      "Hi there!",
-    ]);
-    const deployedMulticallContract = await deployContract("Multicall3", []);
+    const deployedErc20Contract = await deployContract(
+      "ERC20Token",
+      ["TOKEN", "TOKEN", 18],
+      { wallet: deployerWallet },
+    );
+    const deployedGreeterContract = await deployContract(
+      "Greeter",
+      ["ENG", "Hi there!"],
+      { wallet: deployerWallet },
+    );
+    const deployedMulticallContract = await deployContract("Multicall3", [], {
+      wallet: deployerWallet,
+    });
     const deployedGeneralPaymaster = await deployContract(
       "GeneralPaymaster",
       [],
+      { wallet: deployerWallet },
     );
-    const paymasterContract = await deployContract("ApprovalPaymaster", [
-      deployedErc20Contract.address,
-    ]);
+    const paymasterContract = await deployContract(
+      "ApprovalPaymaster",
+      [deployedErc20Contract.address],
+      { wallet: deployerWallet },
+    );
     const genPaymasterAddr = deployedGeneralPaymaster.address;
     const paymasterAddress = paymasterContract.address;
 
@@ -170,14 +175,17 @@ describe("Paymaster integration test", async () => {
       })
       .then((res) => res.wait());
 
-    const deployerBalance =
-      await deployedErc20Contract.balanceOf(deployerAddress);
+    const deployerBalance = await deployedErc20Contract.balanceOf(
+      deployerAddress,
+    );
     console.log(" deployerBalance ==================", Number(deployerBalance));
 
-    const receiverBalance =
-      await deployedErc20Contract.balanceOf(receiverWallet);
-    const newPaymasterBalance =
-      await deployedErc20Contract.balanceOf(paymasterAddress);
+    const receiverBalance = await deployedErc20Contract.balanceOf(
+      receiverWallet,
+    );
+    const newPaymasterBalance = await deployedErc20Contract.balanceOf(
+      paymasterAddress,
+    );
     console.log("=========receiverBalance==========", Number(receiverBalance));
     console.log(
       "========PaymasterBalance==========",
@@ -271,8 +279,9 @@ describe("Paymaster integration test", async () => {
     const balOfAddressFour = await deployedErc20Contract.balanceOf(
       LOCAL_RICH_WALLETS[4].address,
     );
-    const balOfPaymaster =
-      await deployedErc20Contract.balanceOf(paymasterAddress);
+    const balOfPaymaster = await deployedErc20Contract.balanceOf(
+      paymasterAddress,
+    );
     console.log(
       "\n =========PaymasterBalance==========",
       Number(balOfPaymaster),
@@ -334,8 +343,9 @@ describe("Paymaster integration test", async () => {
       assert(data.status === 1);
       assert(data.confirmations >= 1);
     });
-    const presentPaymasterBalance =
-      await getProvider().getBalance(genPaymasterAddr);
+    const presentPaymasterBalance = await getProvider().getBalance(
+      genPaymasterAddr,
+    );
     // Run contract read function
     for (const data of greetingData) {
       const greeting = await deployedGreeterContract.greet(data.language);
