@@ -13,7 +13,7 @@
     "batch": "hardhat deploy-zksync --script use-multicall-batch.ts",
     "compile": "hardhat compile",
     "clean": "hardhat clean",
-    "test": "hardhat test --network hardhat"
+    "test-paymaster": "hardhat test ./test/batch-txs-and-paymaster/paymaster.integration.test.ts"
   },
   "devDependencies": {
     "@matterlabs/hardhat-zksync-deploy": "^0.6.5",

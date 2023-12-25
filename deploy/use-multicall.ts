@@ -52,9 +52,7 @@ export default async function () {
   const fee = gasPrice.mul(gasLimit.toString());
   console.log(`Transaction fee estimation is :>> ${fee.toString()}\n`);
 
-  const res = await contract
-    .aggregate3(functionCalls)
-    .then((res) => res.wait());
+  const res = await contract.aggregate3(functionCalls);
   console.log({ res });
 
   // Run contract read function
@@ -65,6 +63,19 @@ export default async function () {
       `Balance of Address ${i + 1}: ${wallet.address} is ${balance.toString()}`,
     );
   }
+  const receipt = await res.wait();
+
+  /**
+   * check the status of each transaction in the multicall using
+   *  getTransactionReceipt function
+   **/
+  const TransactionReciept = receipt.events.map((event) =>
+    event.getTransactionReceipt(),
+  );
+  const conformedTransaction = await Promise.all(TransactionReciept);
+  conformedTransaction.forEach((data) => {
+    console.log("\n transaction status: ", data.status);
+  });
 
   clearInterval(loadingAnimation);
   console.log("\nExecution complete!");

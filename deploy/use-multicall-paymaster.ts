@@ -20,6 +20,7 @@ export default async function () {
   const loadingAnimation = displayLoadingAnimation();
   console.log(`Running script to interact with contract ${CONTRACT_ADDRESS}`);
 
+
   // Load compiled contract info
   const contractArtifact = await hre.artifacts.readArtifact("Multicall3");
   const greeterArtifact = await hre.artifacts.readArtifact("Greeter");
@@ -63,17 +64,25 @@ export default async function () {
   const fee = gasPrice.mul(gasLimit.toString());
   console.log("Transaction fee estimation is :>> ", fee.toString());
 
-  const res = await contract
-    .aggregate3(functionCalls, {
-      customData: {
-        paymasterParams,
-        gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      },
-    })
-    .then((res) => res.wait());
+  const res = await contract.aggregate3(functionCalls, {
+    customData: {
+      paymasterParams,
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    },
+  });
+  const receipt = await res.wait();
 
-  console.log({ res });
-
+  /**
+   * check the status of each transaction in the multicall using
+   *  getTransactionReceipt function
+   **/
+  const TransactionReciept = receipt.events.map((event) =>
+    event.getTransactionReceipt(),
+  );
+  const conformedTransaction = await Promise.all(TransactionReciept);
+  conformedTransaction.forEach((data) => {
+    console.log("\n transaction status: ", data.status);
+  });
   // Run contract read function
   for (const data of greetingData) {
     const greeting = await greeter.greet(data.language);
