@@ -1,6 +1,6 @@
 export const ADDRESS = {
-  delegableaccount: "0x8a7E4b12Fb1914d91A84fe66e7B0e899DE291167",
-  autopayment: "0x4768d649Da9927a8b3842108117eC0ca7Bc6953f",
+  delegableaccount: "0xc39F6c1A7118F93d7686f9c4dC4912DEd89422b3",
+  autopayment: "0x4894153C857Be405A0994e58e3279541e33e6e07",
 };
 
 export const PAYMENT_INTERVALS = {

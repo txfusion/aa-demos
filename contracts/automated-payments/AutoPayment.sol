@@ -42,8 +42,9 @@ contract AutoPayment is IAutoPayment, IERC165, Ownable {
 
   // TODO: CHECK CONDITIONS BEFORE CALLING
   function executePayment(address _subscriber, uint256 _amount) external {
-    // lastCharged[_subscriber] = block.timestamp;
+    lastCharged[_subscriber] = block.timestamp;
     IDelegableAccount(_subscriber).executeAutoPayment(_amount);
+    emit LastChanged(_subscriber, block.timestamp);
   }
 
   /// @notice The method to add a new auto payments subscriber

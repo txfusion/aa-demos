@@ -10,8 +10,8 @@ import { ADDRESS } from "../../utils/constants";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 
-const TRANSFER_AMOUNT = ethers.utils.parseEther("3");
-const ALLOW_AMOUNT = ethers.utils.parseEther("1");
+const TRANSFER_AMOUNT = ethers.utils.parseEther("0.1");
+const ALLOW_AMOUNT = ethers.utils.parseEther("0.05");
 
 async function main() {
   const zkWallet = new Wallet(PRIVATE_KEY);
