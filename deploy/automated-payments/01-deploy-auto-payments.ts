@@ -15,7 +15,7 @@ async function main() {
     [deployer.zkWallet.address],
     true
   );
-  await deployContract(deployer, "AutoPayment", [], true);
+  // await deployContract(deployer, "AutoPayment", [], true);
 }
 
 main().catch((error) => {

@@ -12,8 +12,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 
 const TRANSFER_AMOUNT = ethers.utils.parseEther("0.05");
 const ALLOW_AMOUNT = ethers.utils.parseEther("0.001");
-const TIME_INTERVAL = 60;
-const DELEGABLE_ACCOUNT_ADDRESS = "0xB162C08688a684f751BFd3E59fe3D30e07d800C0"
+const DELEGABLE_ACCOUNT_ADDRESS = "0xcf9B0897Ec50b9AA6f71C8493BAFf0b91D8964Fd"
 
 async function main() {
   const zkWallet = new Wallet(PRIVATE_KEY);
@@ -37,11 +36,11 @@ async function main() {
 
   console.log("=============================================");
 
-  // Add a new payee
+  // Add a new payee (time interval is 0 which represent first enum field of PaymentInterval struct (1 minute))
   let tx = await accountContract.addAllowedPayee(
     ADDRESS.autopayment,
     ALLOW_AMOUNT,
-    TIME_INTERVAL
+    0
   );
 
   let receipt = await tx.wait();

@@ -1,0 +1,42 @@
+type LastChanged @entity(immutable: true) {
+  id: Bytes!
+  _subscriber: Bytes! # address
+  _timestamp: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SubscriberAdded @entity(immutable: true) {
+  id: Bytes!
+  _subscriber: Bytes! # address
+  _amount: BigInt! # uint256
+  _timeInterval: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SubscriberRemoved @entity(immutable: true) {
+  id: Bytes!
+  _subscriber: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AutoSubscription @entity {
+  id: Bytes! #subscriber address
+  amount: BigInt! # uint256
+  timeInterval: BigInt! # uint256
+  lastPayment: BigInt!
+}

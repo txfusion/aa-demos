@@ -11,7 +11,7 @@ interface IAutoPayment {
     uint256 indexed _timeInterval
   );
   event SubscriberRemoved(address indexed _subscriber);
-  event LastChanged(address indexed _subscriber, uint256 indexed _timestamp);
+  event PaymentExecuted(address indexed _subscriber, uint256 indexed amount);
 
   function addSubscriber(uint256 amount, PaymentInterval timeInterval) external;
 

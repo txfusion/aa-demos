@@ -1,0 +1,33 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AutoPayment
+    network: zksync-era-testnet
+    source:
+      address: "0x4894153C857Be405A0994e58e3279541e33e6e07"
+      abi: AutoPayment
+      startBlock: 15755474
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - LastChanged
+        - OwnershipTransferred
+        - SubscriberAdded
+        - SubscriberRemoved
+      abis:
+        - name: AutoPayment
+          file: ./abis/AutoPayment.json
+      eventHandlers:
+        - event: LastChanged(indexed address,indexed uint256)
+          handler: handleLastChanged
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: SubscriberAdded(indexed address,indexed uint256,indexed uint256)
+          handler: handleSubscriberAdded
+        - event: SubscriberRemoved(indexed address)
+          handler: handleSubscriberRemoved
+      file: ./src/auto-payment.ts

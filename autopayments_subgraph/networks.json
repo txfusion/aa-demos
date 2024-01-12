@@ -1,0 +1,8 @@
+{
+  "zksync-era-testnet": {
+    "AutoPayment": {
+      "address": "0x4894153C857Be405A0994e58e3279541e33e6e07",
+      "startBlock": 15755474
+    }
+  }
+}
