@@ -7,9 +7,10 @@ import { SentryInterceptor } from 'common/sentry';
 import { HealthModule } from 'common/health';
 import { AppService } from './app.service';
 import { HTTPModule } from '../http';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [HTTPModule, HealthModule, PrometheusModule, ConfigModule],
+  imports: [HTTPModule, HealthModule, PrometheusModule, ConfigModule, ScheduleModule.forRoot()],
   providers: [{ provide: APP_INTERCEPTOR, useClass: SentryInterceptor }, AppService],
 })
 export class AppModule {}
