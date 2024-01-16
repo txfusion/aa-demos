@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 import { Wallet, Provider } from "zksync-web3";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { abi } from "./abis/auto_payment"
+import { isExecutable } from "./utils";
 
 const ZKSYNC_GRAPH_URI = "https://api.studio.thegraph.com/query/56765/auto-payments/v0.0.3"
 require("dotenv").config();
@@ -32,7 +33,7 @@ export class AutoPaymentService {
         }
     }
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    // @Cron(CronExpression.EVERY_10_SECONDS)
     async getFilteredSubscriptions(): Promise<AutoSubscription[]> {
         try {
             const variables = {
@@ -51,7 +52,7 @@ export class AutoPaymentService {
         }
     }
 
-    // @Cron(CronExpression.EVERY_10_SECONDS)
+    @Cron(CronExpression.EVERY_30_SECONDS)
     async executeAutoPayments() {
       //query all subscriptions, if there is subscription with no lastPayment field, execute autopayment
       try {
@@ -64,14 +65,12 @@ export class AutoPaymentService {
           let autoPaymentContract = new ethers.Contract(autoPaymentAddress, abi, signer)
           let tx
           let receipt
-          const blockNumber = await signer.provider.getBlockNumber();
-          const block = await signer.provider.getBlock(blockNumber);
-          console.log("Current block timestamp: ", block.timestamp);
+
           for(let i = 0; i < autoSubscriptions.length; i ++){
               console.log("[EAP] LastPayment[", i, "]: ", autoSubscriptions[i].lastPayment.toString())
               //this will fails if the account doesn't have enough funds, or if allowance is not high enough
               //should we check these conditions on the backend?
-              if(Number(autoSubscriptions[i].lastPayment) + Number(autoSubscriptions[i].timeInterval) < Number(block.timestamp)) {
+              if(await isExecutable(autoSubscriptions[i], signer)) {
                   //execute auto payment; interact with the chain thorugh ethers
                   console.log("Executing auto payment...[", autoSubscriptions[i].id, "]")
                   tx = await autoPaymentContract.executePayment(autoSubscriptions[i].id, autoSubscriptions[i].amount)
