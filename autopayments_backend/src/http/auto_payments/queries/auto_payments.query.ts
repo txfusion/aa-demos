@@ -10,3 +10,16 @@ export const subscriptionQuery: RequestDocument = gql`
         }
     }
 `;
+
+export const filteredSubscriptionsQuery: RequestDocument = gql`
+    query Subscriptions($currentTimestamp: Int!, $balance: String) {
+        autoSubscriptions(
+            where: { amount: $balance }
+        ) {
+            id
+            amount
+            timeInterval
+            lastPayment
+        }
+    }
+`;

@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { GraphQLClient } from "graphql-request";
 import { AutoSubscription } from "./entities/auto_payments.entity";
-import { subscriptionQuery } from "./queries/auto_payments.query";
+import { subscriptionQuery, filteredSubscriptionsQuery } from "./queries/auto_payments.query";
 import { ethers } from "ethers";
 import { Wallet, Provider } from "zksync-web3";
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -33,6 +33,25 @@ export class AutoPaymentService {
     }
 
     @Cron(CronExpression.EVERY_10_SECONDS)
+    async getFilteredSubscriptions(): Promise<AutoSubscription[]> {
+        try {
+            const variables = {
+                currentTimestamp: 12,
+                balance: "1000000000000000",
+            };
+            const { autoSubscriptions } = <{ autoSubscriptions: AutoSubscription[] }> (
+                await this.client.request(filteredSubscriptionsQuery, variables)
+            )
+            console.log("Subscriptions: ", autoSubscriptions)
+
+            return autoSubscriptions
+        } catch(e) {
+            console.log(e)
+            throw new InternalServerErrorException('Unable to get filtered subscriptions from Subgraph');
+        }
+    }
+
+    // @Cron(CronExpression.EVERY_10_SECONDS)
     async executeAutoPayments() {
       //query all subscriptions, if there is subscription with no lastPayment field, execute autopayment
       try {
