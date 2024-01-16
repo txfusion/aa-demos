@@ -4,7 +4,7 @@ import { richWallet, deployContract } from "../../utils";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import { ethers } from "ethers";
 import { AutoPaymentFactory__factory, DelegableAccount__factory } from "../../typechain";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5");

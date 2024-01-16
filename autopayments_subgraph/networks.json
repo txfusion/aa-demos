@@ -3,6 +3,9 @@
     "AutoPayment": {
       "address": "0x4894153C857Be405A0994e58e3279541e33e6e07",
       "startBlock": 15755474
+    },
+    "Contract": {
+      "address": "0x21f2B0eB4AE56E53A00dBEE7f9918B5Dd34bc236"
     }
   }
 }

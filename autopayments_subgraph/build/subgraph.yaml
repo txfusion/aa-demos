@@ -1,6 +1,6 @@
 specVersion: 0.0.5
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum
     name: AutoPayment
@@ -20,7 +20,7 @@ dataSources:
         - SubscriberRemoved
       abis:
         - name: AutoPayment
-          file: ./abis/AutoPayment.json
+          file: AutoPayment/abis/AutoPayment.json
       eventHandlers:
         - event: LastChanged(indexed address,indexed uint256)
           handler: handleLastChanged
@@ -30,7 +30,7 @@ dataSources:
           handler: handleSubscriberAdded
         - event: SubscriberRemoved(indexed address)
           handler: handleSubscriberRemoved
-      file: ./src/auto-payment.ts
+      file: AutoPayment/AutoPayment.wasm
   - kind: ethereum
     name: Contract
     network: zksync-era-testnet
@@ -46,8 +46,8 @@ dataSources:
         - AutoPaymentCreated
       abis:
         - name: Contract
-          file: ./abis/Contract.json
+          file: Contract/abis/Contract.json
       eventHandlers:
         - event: AutoPaymentCreated(indexed address)
           handler: handleAutoPaymentCreated
-      file: ./src/contract.ts
+      file: Contract/Contract.wasm
