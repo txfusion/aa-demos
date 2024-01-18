@@ -203,3 +203,9 @@ export const LOCAL_RICH_WALLETS = [
       "0x3eb15da85647edd9a1159a4a13b9e7c56877c4eb33f614546d4db06a51868b1c",
   },
 ];
+
+export async function verify(address: string) {
+  return hre.run("verify:verify", {
+    address,
+  });
+}

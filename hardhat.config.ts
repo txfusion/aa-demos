@@ -1,12 +1,16 @@
 import { HardhatUserConfig } from "hardhat/config";
 
-import "@matterlabs/hardhat-zksync-node";
-import "@matterlabs/hardhat-zksync-deploy";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
 import "@matterlabs/hardhat-zksync-solc";
+import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-verify";
+import "@matterlabs/hardhat-zksync-upgradable";
+import "@matterlabs/hardhat-zksync-chai-matchers";
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "dockerizedNode",
+  // Note: Slither has to use regular solc to compile contracts, so have it work on non-zksync Hardhat
+  defaultNetwork: process.env.RUN_SLITHER ? "zkSyncTestnet" : "inMemoryNode",
   networks: {
     zkSyncTestnet: {
       url: "https://testnet.era.zksync.dev",
@@ -33,18 +37,33 @@ const config: HardhatUserConfig = {
       zksync: true,
     },
     hardhat: {
-      zksync: true,
+      zksync: process.env.RUN_SLITHER ? false : true,
     },
   },
   zksolc: {
-    version: "latest",
+    version: "1.3.18",
     settings: {
       // find all available options in the official documentation
       // https://era.zksync.io/docs/tools/hardhat/hardhat-zksync-solc.html#configuration
+      optimizer: {
+        enabled: true,
+        runs: 10000,
+      },
     },
   },
   solidity: {
-    version: "0.8.17",
+    compilers: [
+      {
+        version: "0.8.17",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10000,
+          },
+          viaIR: true,
+        },
+      },
+    ],
   },
 };
 
