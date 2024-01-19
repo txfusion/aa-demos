@@ -5,23 +5,23 @@ pragma solidity ^0.8.0;
 import {AutoPayment} from "./AutoPayment.sol";
 import {IAutoPaymentFactory} from "./interfaces/IAutoPaymentFactory.sol";
 
-contract AutoPaymentFactory is IAutoPaymentFactory {
-    address public admin;
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+contract AutoPaymentFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable, IAutoPaymentFactory {
     address[] public autoPayments;
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Only Admins can call");
-        _;
+    function initialize() external initializer {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
     }
 
-    constructor() {
-        admin = msg.sender;
-    }
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
-   function createNewAutoPayment() public {
+    function createNewAutoPayment() public {
         address autoPayment = address(new AutoPayment());
         autoPayments.push(autoPayment);
         emit AutoPaymentCreated(autoPayment);
     }
-} 
+}
