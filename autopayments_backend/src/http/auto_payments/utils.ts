@@ -8,7 +8,9 @@ export async function isExecutable(autoSubscription, signer){
     console.log("Balance of Delegable Account: ", accountBalance.toString())
 
     const condition1: boolean = Number(autoSubscription.lastPayment) + Number(autoSubscription.timeInterval) < Number(block.timestamp)
-    const condition2: boolean = Number(autoSubscription.amount) > Number(accountBalance)
+    const condition2: boolean = Number(autoSubscription.amount) <= Number(accountBalance)
+    console.log("Condition 1: ", condition1)
+    console.log("Condition 2: ", condition2)
     
     return condition1 && condition2 
 }

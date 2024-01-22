@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from "@nestjs/common";
+import { Controller, Get, Param, Post } from "@nestjs/common";
 import { AutoPaymentService } from "./auto_payments.service";
 import { AutoSubscription } from "./entities/auto_payments.entity";
 
@@ -19,6 +19,11 @@ export class AutoPaymentController {
     @Get('/eap')
     async executeAutoPayments() {
         await this.autoPaymentService.executeAutoPayments()
+    }
+
+    @Post('/remove/:address')
+    async removeSubscription(@Param('address') address: string) {
+        await this.autoPaymentService.removeSubscription(address)
     }
 
 }
