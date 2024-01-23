@@ -7,6 +7,7 @@ import {EIP712Domain} from "./lib/EIP712Domain.sol";
 import {IERC20Internal} from "./lib/IERC20Internal.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title Authorisable version of the EIP3009 contract.
 /// @author TxFusion
@@ -15,7 +16,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 abstract contract EIP3009Authorisable is
   IEIP3009Authorisable,
   EIP712,
-  IERC20Internal
+  IERC20Internal,
+  ReentrancyGuard
 {
   struct PendingTransfer {
     uint256 value;
@@ -51,7 +53,7 @@ abstract contract EIP3009Authorisable is
     uint256 validBefore,
     bytes32 nonce,
     bytes memory signature
-  ) external override {
+  ) external override nonReentrant {
     // ~~~ Checks ~~~
     // Note: Do we wanna have it be submittable before so it's going to be acceptable in the future
     // require(block.timestamp > validAfter, _AUTHORIZATION_NOT_YET_VALID);
@@ -94,7 +96,7 @@ abstract contract EIP3009Authorisable is
     address to,
     bytes32 nonce,
     bytes memory signature
-  ) external override {
+  ) external override nonReentrant {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
@@ -129,7 +131,7 @@ abstract contract EIP3009Authorisable is
     address to,
     bytes32 nonce,
     bytes memory signature
-  ) external override {
+  ) external override nonReentrant {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
@@ -162,7 +164,7 @@ abstract contract EIP3009Authorisable is
     uint256 validBefore,
     bytes32 nonce,
     bytes memory signature
-  ) external override {
+  ) external override nonReentrant {
     // ~~~ Checks
     require(to == msg.sender, _CALLER_NOT_PAYEE);
 
@@ -211,7 +213,7 @@ abstract contract EIP3009Authorisable is
     address to,
     bytes32 nonce,
     bytes memory signature
-  ) external override {
+  ) external override nonReentrant {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
 
