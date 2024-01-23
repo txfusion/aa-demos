@@ -5,7 +5,8 @@ pragma solidity 0.8.17;
 import {IEIP3009Authorisable} from "./lib/IEIP3009Authorisable.sol";
 import {EIP712Domain} from "./lib/EIP712Domain.sol";
 import {IERC20Internal} from "./lib/IERC20Internal.sol";
-import {EIP712} from "./lib/EIP712.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /// @title Authorisable version of the EIP3009 contract.
 /// @author TxFusion
@@ -13,7 +14,7 @@ import {EIP712} from "./lib/EIP712.sol";
 /// @dev All transfers (except those initiated by the receiver) will end up in the 'pending' state until the receiver explicitly triggers them to their own address.
 abstract contract EIP3009Authorisable is
   IEIP3009Authorisable,
-  EIP712Domain,
+  EIP712,
   IERC20Internal
 {
   struct PendingTransfer {
@@ -34,6 +35,11 @@ abstract contract EIP3009Authorisable is
   mapping(address => mapping(address => mapping(bytes32 => bool)))
     internal _authorizationStates;
 
+  constructor(
+    string memory name,
+    string memory version
+  ) EIP712(name, version) {}
+
   /**
    * @inheritdoc IEIP3009Authorisable
    */
@@ -44,9 +50,7 @@ abstract contract EIP3009Authorisable is
     uint256 validAfter,
     uint256 validBefore,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external override {
     // ~~~ Checks ~~~
     // Note: Do we wanna have it be submittable before so it's going to be acceptable in the future
@@ -63,7 +67,7 @@ abstract contract EIP3009Authorisable is
       validBefore,
       nonce
     );
-    _checkSender(data, from, v, r, s);
+    require(_getSigner(data, signature) == from, _INVALID_SIGNATURE_ERROR);
     // ~~~~~~~~~~~~~~~
 
     // Lock tokens
@@ -89,9 +93,7 @@ abstract contract EIP3009Authorisable is
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external override {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
@@ -108,7 +110,7 @@ abstract contract EIP3009Authorisable is
       pt.validBefore,
       nonce
     );
-    _checkSender(data, to, v, r, s);
+    require(_getSigner(data, signature) == to, _INVALID_SIGNATURE_ERROR);
     // ~~~~~~~~~~~~~~~
 
     // Unlock tokens
@@ -126,9 +128,7 @@ abstract contract EIP3009Authorisable is
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external override {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
@@ -139,7 +139,7 @@ abstract contract EIP3009Authorisable is
       to,
       nonce
     );
-    _checkSender(data, to, v, r, s);
+    require(_getSigner(data, signature) == to, _INVALID_SIGNATURE_ERROR);
     // ~~~~~~~~~~~~~~~
 
     // Unlock tokens
@@ -161,9 +161,7 @@ abstract contract EIP3009Authorisable is
     uint256 validAfter,
     uint256 validBefore,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external override {
     // ~~~ Checks
     require(to == msg.sender, _CALLER_NOT_PAYEE);
@@ -190,7 +188,7 @@ abstract contract EIP3009Authorisable is
       validBefore,
       nonce
     );
-    _checkSender(data, from, v, r, s); // Note: receiver should reuse sender's signature
+    require(_getSigner(data, signature) == from, _INVALID_SIGNATURE_ERROR); // Note: receiver should reuse sender's signature
     // ~~~~~~~~~~~~~~~
 
     // Transfer tokens from sender to receiver
@@ -212,9 +210,7 @@ abstract contract EIP3009Authorisable is
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external override {
     // ~~~ Checks ~~~
     require(_authorizationStates[from][to][nonce], _AUTHORIZATION_UNKNOWN);
@@ -225,7 +221,7 @@ abstract contract EIP3009Authorisable is
       to,
       nonce
     );
-    _checkSender(data, from, v, r, s);
+    require(_getSigner(data, signature) == from, _INVALID_SIGNATURE_ERROR);
     // ~~~~~~~~~~~~~~~
 
     // Unlock tokens
@@ -251,16 +247,11 @@ abstract contract EIP3009Authorisable is
   /**
    * @inheritdoc IEIP3009Authorisable
    */
-  function _checkSender(
+  function _getSigner(
     bytes memory data,
-    address sender,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) internal view override {
-    require(
-      EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == sender,
-      _INVALID_SIGNATURE_ERROR
-    );
+    bytes memory signature
+  ) internal view override returns (address) {
+    bytes32 digest = _hashTypedDataV4(keccak256(data));
+    return ECDSA.recover(digest, signature);
   }
 }

@@ -20,13 +20,11 @@ contract TokenAuthorisable is IERC20Internal, EIP3009Authorisable {
     string memory tokenSymbol,
     uint8 tokenDecimals,
     uint256 tokenTotalSupply
-  ) {
+  ) EIP3009Authorisable(_name, _version) {
     _name = tokenName;
     _version = tokenVersion;
     _symbol = tokenSymbol;
     _decimals = tokenDecimals;
-
-    DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(tokenName, tokenVersion);
 
     _mint(msg.sender, tokenTotalSupply);
   }
