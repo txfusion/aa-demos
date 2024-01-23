@@ -19,9 +19,9 @@ export const EIP3009_TYPEHASHES = {
       "RejectTransferWithAuthorization(address from,address to,bytes32 nonce)",
     ),
   ),
-  RECEIVE: ethersUtils.keccak256(
+  REDEEM: ethersUtils.keccak256(
     ethersUtils.toUtf8Bytes(
-      "ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)",
+      "RedeemWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)",
     ),
   ),
   CANCEL_AUTHORIZATION: ethersUtils.keccak256(

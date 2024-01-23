@@ -182,7 +182,7 @@ abstract contract EIP3009Authorisable is
     }
 
     bytes memory data = abi.encode(
-      RECEIVE_WITH_AUTHORIZATION_TYPEHASH,
+      REDEEM_WITH_AUTHORIZATION_TYPEHASH,
       from,
       to,
       value,
