@@ -930,7 +930,6 @@ describe("========= EIP3009Authorisable =========", async () => {
         contract,
         eip712: { domain },
         accounts,
-        erc20,
       } = context;
       const { sender, receiver } = accounts;
 
@@ -941,7 +940,7 @@ describe("========= EIP3009Authorisable =========", async () => {
         validAfter: 0,
         validBefore: ethers.constants.MaxUint256.toString(),
       };
-      const { from, to, value, validAfter, validBefore } = transferParams;
+      const { from, to } = transferParams;
 
       const signature = await signCancelAuthorization(
         from,
@@ -963,7 +962,6 @@ describe("========= EIP3009Authorisable =========", async () => {
         contract,
         eip712: { domain },
         accounts,
-        erc20,
       } = context;
       const { sender, receiver } = accounts;
 
@@ -1219,46 +1217,46 @@ function signCancelAuthorization(
   );
 }
 
-const eip712SignPayload = {
-  domain: {
-    name: "Authorisable EIP-3009 Token",
-    version: "1",
-    chainId: 280, // zkSync Goerli chain id
-    verifyingContract: "0x047A0dC319992618Da783Ea43B093c75f8DF440e", // TokenAuthorisable on testnet
-  } as const,
-  types: {
-    QueueTransfer: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "value", type: "uint256" },
-      { name: "validAfter", type: "uint256" },
-      { name: "validBefore", type: "uint256" },
-      { name: "nonce", type: "bytes32" },
-    ],
-    AcceptTransferWithAuthorization: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "nonce", type: "bytes32" },
-    ],
-    RejectTransferWithAuthorization: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "nonce", type: "bytes32" },
-    ],
-    RedeemWithAuthorization: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "value", type: "uint256" },
-      { name: "validAfter", type: "uint256" },
-      { name: "validBefore", type: "uint256" },
-      { name: "nonce", type: "bytes32" },
-    ],
-    CancelAuthorization: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "nonce", type: "bytes32" },
-    ],
-  } as const,
-  message: "depends on the call",
-  primaryType: "depends on the call",
-};
+// const eip712SignPayload = {
+//   domain: {
+//     name: "Authorisable EIP-3009 Token",
+//     version: "1",
+//     chainId: 280, // zkSync Goerli chain id
+//     verifyingContract: "0x047A0dC319992618Da783Ea43B093c75f8DF440e", // TokenAuthorisable on testnet
+//   } as const,
+//   types: {
+//     QueueTransfer: [
+//       { name: "from", type: "address" },
+//       { name: "to", type: "address" },
+//       { name: "value", type: "uint256" },
+//       { name: "validAfter", type: "uint256" },
+//       { name: "validBefore", type: "uint256" },
+//       { name: "nonce", type: "bytes32" },
+//     ],
+//     AcceptTransferWithAuthorization: [
+//       { name: "from", type: "address" },
+//       { name: "to", type: "address" },
+//       { name: "nonce", type: "bytes32" },
+//     ],
+//     RejectTransferWithAuthorization: [
+//       { name: "from", type: "address" },
+//       { name: "to", type: "address" },
+//       { name: "nonce", type: "bytes32" },
+//     ],
+//     RedeemWithAuthorization: [
+//       { name: "from", type: "address" },
+//       { name: "to", type: "address" },
+//       { name: "value", type: "uint256" },
+//       { name: "validAfter", type: "uint256" },
+//       { name: "validBefore", type: "uint256" },
+//       { name: "nonce", type: "bytes32" },
+//     ],
+//     CancelAuthorization: [
+//       { name: "from", type: "address" },
+//       { name: "to", type: "address" },
+//       { name: "nonce", type: "bytes32" },
+//     ],
+//   } as const,
+//   message: "depends on the call",
+//   primaryType: "depends on the call",
+// };
