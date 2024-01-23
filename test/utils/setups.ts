@@ -4,7 +4,7 @@ import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 
 import { LOCAL_RICH_WALLETS } from "../../deploy/utils";
 import { PROVIDER_URL } from "./constants";
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from "ethers";
 
 export async function transactionAuthorizationSetup() {
   const AUTH_TOKEN_SETTINGS = {
@@ -43,7 +43,20 @@ export async function transactionAuthorizationSetup() {
       randomWallet,
     },
     contract: authEIP3009Token,
-    domainSeparator: await authEIP3009Token.DOMAIN_SEPARATOR(),
+    eip712: {
+      domain: await getEIP712Domain(authEIP3009Token),
+    },
     erc20: { ...AUTH_TOKEN_SETTINGS },
   };
 }
+
+const getEIP712Domain = async (contract: Contract) => {
+  const { name, version, chainId, verifyingContract } =
+    await contract.eip712Domain();
+  return {
+    name,
+    version,
+    chainId,
+    verifyingContract,
+  };
+};

@@ -16,31 +16,35 @@ abstract contract IEIP3009Authorisable {
   string internal constant _AUTHORIZATION_UNKNOWN =
     "EIP3009: authorization does not exist";
 
-  // keccak256("QueueTransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
   bytes32 public constant QUEUE_TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
-    0x8790e5bf3b3c010fae87499a3d3ea57990c7a707fbeb33b32dbbdbecc9122fd1;
+    keccak256(
+      "QueueTransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)"
+    );
 
-  // keccak256("AcceptTransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
   bytes32 public constant ACCEPT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
-    0xf691a8b7f38f3158c9f5e0bee86affb282a4efe5bcd68b44997eb178b661843f;
+    keccak256(
+      "AcceptTransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)"
+    );
 
-  // keccak256("RejectTransferWithAuthorization(address from,address to,bytes32 nonce)")
   bytes32 public constant REJECT_TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
-    0xd532993334ae2a721b8a5502725ae8ca63faf3200d09cd410b161542e7a8b3e0;
+    keccak256(
+      "RejectTransferWithAuthorization(address from,address to,bytes32 nonce)"
+    );
 
-  // keccak256("ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-  bytes32 public constant RECEIVE_WITH_AUTHORIZATION_TYPEHASH =
-    0xd099cc98ef71107a616c4f0f941f04c322d8e254fe26b3c6668db87aae413de8;
+  bytes32 public constant REDEEM_WITH_AUTHORIZATION_TYPEHASH =
+    keccak256(
+      "RedeemWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)"
+    );
 
-  // keccak256("CancelAuthorization(address sender,address receiver,bytes32 nonce)")
   bytes32 public constant CANCEL_AUTHORIZATION_TYPEHASH =
-    0x67b7fcdd5efc94e90823a7fd29865d260c4485f2f999c20ffde06b78ec74ac6e;
+    keccak256("CancelAuthorization(address from,address to,bytes32 nonce)");
 
   event AuthorizationUsed(
     address indexed sender,
     address indexed receiver,
     bytes32 indexed nonce
   );
+
   event AuthorizationCanceled(
     address indexed sender,
     address indexed receiver,
@@ -86,9 +90,7 @@ abstract contract IEIP3009Authorisable {
    * @param validAfter          The time after which this is valid (unix time)
    * @param validBefore         The time before which this is valid (unix time)
    * @param nonce               Unique nonce
-   * @param v                   v of the signature
-   * @param r                   r of the signature
-   * @param s                   s of the signature
+   * @param signature           Signed queue message
    */
   function queueTransfer(
     address from,
@@ -97,9 +99,7 @@ abstract contract IEIP3009Authorisable {
     uint256 validAfter,
     uint256 validBefore,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external virtual;
 
   /**
@@ -111,17 +111,13 @@ abstract contract IEIP3009Authorisable {
    * @param from                Payer's address (Authorizer)
    * @param to                  Payee's address
    * @param nonce               Unique nonce
-   * @param v                   v of the signature
-   * @param r                   r of the signature
-   * @param s                   s of the signature
+   * @param signature           Signed accept message
    */
   function acceptTransferWithAuthorization(
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external virtual;
 
   /**
@@ -132,17 +128,13 @@ abstract contract IEIP3009Authorisable {
    * @param from                Payer's address (Authorizer)
    * @param to                  Payee's address
    * @param nonce               Unique nonce
-   * @param v                   v of the signature
-   * @param r                   r of the signature
-   * @param s                   s of the signature
+   * @param signature           Signed reject message
    */
   function rejectTransferWithAuthorization(
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external virtual;
 
   /**
@@ -159,9 +151,7 @@ abstract contract IEIP3009Authorisable {
    * @param validAfter          The time after which this is valid (unix time)
    * @param validBefore         The time before which this is valid (unix time)
    * @param nonce               Unique nonce
-   * @param v                   v of the signature
-   * @param r                   r of the signature
-   * @param s                   s of the signature
+   * @param signature           Signed redeem message
    */
   function redeemWithAuthorization(
     address from,
@@ -170,9 +160,7 @@ abstract contract IEIP3009Authorisable {
     uint256 validAfter,
     uint256 validBefore,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external virtual;
 
   /**
@@ -183,17 +171,13 @@ abstract contract IEIP3009Authorisable {
    * @param from          Sender's address
    * @param to            Receiver's address
    * @param nonce         Nonce of the authorization
-   * @param v             v of the signature
-   * @param r             r of the signature
-   * @param s             s of the signature
+   * @param signature     Signed cancel message
    */
   function cancelAuthorization(
     address from,
     address to,
     bytes32 nonce,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external virtual;
 
   /**
@@ -213,19 +197,13 @@ abstract contract IEIP3009Authorisable {
   ) external view virtual returns (bool);
 
   /**
-   * @notice Checks transaction data against the signature components (v,r,s) to see if the sender is actually the one who signed the transaction.
+   * @notice Extracts the signer of the transaction by using the signature and the data that the user signed.
    *
    * @param data    abi encoded data structure that was signed
-   * @param sender  assumed sender of the transaction
-   * @param v       'v' component of the signature
-   * @param r       'r' component of the signature
-   * @param s       's' component of the signature
+   * @param signature user's signature
    */
-  function _checkSender(
+  function _getSigner(
     bytes memory data,
-    address sender,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) internal view virtual;
+    bytes memory signature
+  ) internal view virtual returns (address);
 }
