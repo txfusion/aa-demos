@@ -10,7 +10,7 @@ import {
   getProvider,
   getWallet,
   greetingData,
-} from "../../deploy/utils";
+} from "../../deploy/batch-txs-paymaster/utils";
 
 const TESTNET_PROVIDER_URL = "http://localhost:8011";
 const TRANSFER_AMOUNT = ethers.utils.parseEther("5"); // Amount of ETH to fund paymaster
@@ -28,7 +28,7 @@ describe("Paymaster integration test", async () => {
     const receiverWallet = receiver.address;
     const deployer = new Deployer(hre, deployerWallet);
     /**
-     * Deployment of RC20, Greeter, Multicall and Paymaster contracts
+     * Deployment of ERC20, Greeter, Multicall and Paymaster contracts
      */
 
     const deployedErc20Contract = await deployContract(

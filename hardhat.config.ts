@@ -1,12 +1,17 @@
 import { HardhatUserConfig } from "hardhat/config";
+import * as dotenv from "dotenv";
 
+import "@nomiclabs/hardhat-waffle";
 import "@matterlabs/hardhat-zksync-node";
 import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-solc";
 import "@matterlabs/hardhat-zksync-verify";
+import "@matterlabs/hardhat-zksync-chai-matchers";
+
+dotenv.config({ path: ".env" });
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "dockerizedNode",
+  defaultNetwork: "inMemoryNode",
   networks: {
     zkSyncTestnet: {
       url: "https://sepolia.era.zksync.dev",
