@@ -1,9 +1,9 @@
 {
-  "name": "ankr-hyperchain-features",
+  "name": "aa-demos",
   "version": "1.0.0",
-  "description": "Pre-deployed features for Ankr's zkSync hyperchain",
+  "description": "Account Abstraction Demos",
   "main": "index.js",
-  "repository": "https://github.com/txfusion/ankr.git",
+  "repository": "https://github.com/txfusion/aa-demos.git",
   "author": "TxFusion",
   "license": "MIT",
   "private": true,

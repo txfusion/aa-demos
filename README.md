@@ -1,4 +1,4 @@
-# Ankr Hyperchain Features
+# Account Abstraction Demos
 
 This project was scaffolded with [zksync-cli](https://github.com/matter-labs/zksync-cli).
 
