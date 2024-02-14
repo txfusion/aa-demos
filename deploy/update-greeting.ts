@@ -1,11 +1,9 @@
 import * as hre from "hardhat";
-import { getWallet } from "./utils";
+import { getWallet, readEnv } from "./utils";
 import { ethers } from "ethers";
 
 // Address of the contract to interact with
-const CONTRACT_ADDRESS = "";
-if (!CONTRACT_ADDRESS)
-  throw "⛔️ Provide address of the contract to interact with!";
+const CONTRACT_ADDRESS = readEnv("GREETER_CONTRACT");
 
 // An example of a script to interact with the contract
 export default async function () {
@@ -22,16 +20,19 @@ export default async function () {
   );
 
   // Run contract read function
-  const response = await contract.greet();
+  const response = await contract.greet("ENG");
   console.log(`Current message is: ${response}`);
 
   // Run contract write function
-  const transaction = await contract.setGreeting("Hello people!");
+  const transaction = await contract.setGreeting(
+    "French",
+    "Bonjour TxCitizen!",
+  );
   console.log(`Transaction hash of setting new message: ${transaction.hash}`);
 
   // Wait until transaction is processed
   await transaction.wait();
 
   // Read message after transaction
-  console.log(`The message now is: ${await contract.greet()}`);
+  console.log(`The message now is: ${await contract.greet("French")}`);
 }

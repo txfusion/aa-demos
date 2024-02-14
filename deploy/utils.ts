@@ -3,13 +3,18 @@ import * as hre from "hardhat";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 import dotenv from "dotenv";
 import { formatEther } from "ethers/lib/utils";
-import { BigNumberish } from "ethers";
-
+import { BigNumberish, ethers } from "ethers";
+import { ContractFactory } from "zksync-web3";
 import "@matterlabs/hardhat-zksync-node/dist/type-extensions";
 import "@matterlabs/hardhat-zksync-verify/dist/src/type-extensions";
 
 // Load env file
 dotenv.config();
+
+export function readEnv(key: string) {
+  if (!process.env[key]) throw `⛔️ ${key} wasn't found in .env file!`;
+  return process.env[key] as string;
+}
 
 export const getProvider = () => {
   const rpcUrl = hre.network.config.url;
@@ -23,19 +28,15 @@ export const getProvider = () => {
 };
 
 export const getWallet = (privateKey?: string) => {
-  if (!privateKey) {
-    // Get wallet private key from .env file
-    if (!process.env.WALLET_PRIVATE_KEY)
-      throw "⛔️ Wallet private key wasn't found in .env file!";
+  let PK = privateKey;
+  if (!PK) {
+    PK = readEnv("WALLET_PRIVATE_KEY");
   }
 
   const provider = getProvider();
 
   // Initialize zkSync Wallet
-  const wallet = new Wallet(
-    privateKey ?? process.env.WALLET_PRIVATE_KEY!,
-    provider,
-  );
+  const wallet = new Wallet(PK, provider);
 
   return wallet;
 };
@@ -147,6 +148,45 @@ export const deployContract = async (
   return contract;
 };
 
+export const chargePaymaster = async (paymasterAddress: string) => {
+  // Supplying paymaster with ETH
+  console.log("Funding paymaster with ETH...");
+  const wallet = getWallet();
+  return wallet
+    .sendTransaction({
+      to: paymasterAddress,
+      value: ethers.utils.parseEther("0.01"),
+    })
+    .then((res) => res.wait());
+};
+
+// Function to display a simple loading animation during execution
+export function displayLoadingAnimation(message = "Processing...") {
+  const frames = ["|", "/", "-", "\\"];
+  let i = 0;
+
+  const interval = setInterval(() => {
+    process.stdout.write(`\r${message} ${frames[i++]}`);
+    i %= frames.length;
+  }, 80);
+
+  return interval;
+}
+
+export function getToken() {
+  return ContractFactory.getContract(
+    readEnv("ERC20_TOKEN_CONTRACT"),
+    hre.artifacts.readArtifactSync("ERC20Token").abi,
+    getWallet(),
+  );
+}
+// Fake data to pass into setGreeting function
+export const greetingData = [
+  { text: "Hello", language: "English" },
+  { text: "Bonjour", language: "French" },
+  { text: "Hola", language: "Spanish" },
+  { text: "Ciao", language: "Italian" },
+];
 /**
  * Rich wallets can be used for testing purposes.
  * Available on zkSync In-memory node and Dockerized node.
